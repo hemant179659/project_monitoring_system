@@ -1,0 +1,201 @@
+/* ==============================
+   Root variables for colors and glass effect
+   ============================== */
+:root {
+  --bg: #0f172a; /* Main background color */
+  --card: #0b1220; /* Card or container background color */
+  --accent: #7c3aed; /* Primary accent color for buttons and highlights */
+  --muted: #94a3b8; /* Muted/secondary color for text or borders */
+  --glass: rgba(255, 255, 255, 0.03); /* Transparent glass effect */
+}
+
+/* ==============================
+   Global reset and font
+   ============================== */
+* {
+  box-sizing: border-box; /* Include padding and border in element's total width/height */
+  font-family: Inter, system-ui, sans-serif; /* Default font for the app */
+}
+
+/* ==============================
+   Body and root container styling
+   ============================== */
+body, html, #root {
+  margin: 0; /* Remove default margin */
+  padding: 0; /* Remove default padding */
+  height: 100%; /* Ensure full height for the page and root container */
+  background: linear-gradient(#071029, #081528); /* Gradient background */
+  color: #e6eef8; /* Default text color */
+}
+
+/* ==============================
+   Back button styling
+   ============================== */
+.backBtn {
+  position: absolute; /* Position relative to parent container */
+  top: 20px; /* Distance from top */
+  left: 20px; /* Distance from left */
+  background: rgba(0, 0, 0, 0.6); /* Dark semi-transparent background for contrast */
+  color: #ffffff; /* White arrow or text */
+  font-size: 24px; /* Slightly larger arrow */
+  padding: 12px 16px; /* Space inside button */
+  border-radius: 50%; /* Round button */
+  border: 2px solid #fff; /* Subtle white border for emphasis */
+  cursor: pointer; /* Pointer on hover */
+  backdrop-filter: blur(6px); /* Glass blur effect behind button */
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.7); /* Shadow for depth */
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease; /* Smooth hover transitions */
+}
+.backBtn:hover {
+  transform: scale(1.1); /* Slightly grow on hover */
+  background: rgba(0, 0, 0, 0.8); /* Darker background on hover */
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.9); /* Stronger shadow on hover */
+}
+
+/* ==============================
+   Home page container
+   ============================== */
+.homeContainer {
+  display: flex; /* Use flex layout */
+  flex-direction: column; /* Stack children vertically */
+  align-items: center; /* Center horizontally */
+  justify-content: flex-start; /* Start from top vertically */
+  min-height: 100vh; /* Full viewport height */
+  padding: 45px 32px 32px 32px; /* Top, right, bottom, left padding */
+  background-size: cover; /* Ensure background image covers container */
+  background-position: center; /* Center background image */
+  background-repeat: no-repeat; /* No repeating background image */
+  color: #ffffff; /* White text */
+}
+
+/* ==============================
+   Home page title
+   ============================== */
+.homeTitle {
+  font-size: 3rem; /* Large title size */
+  font-weight: 700; /* Bold text */
+  margin-bottom: 25px; /* Space below title */
+  text-align: center; /* Center the text */
+  text-shadow: 2px 2px 8px rgba(0,0,0,0.7); /* Subtle shadow for readability */
+}
+
+/* ==============================
+   Home page button group
+   ============================== */
+.homeButtonGroup {
+  display: flex; /* Flex layout for buttons */
+  gap: 24px; /* Space between buttons */
+}
+
+/* ==============================
+   Home page buttons (Admin/Dept Login)
+   ============================== */
+.loginBtn {
+  background: linear-gradient(90deg, var(--accent), #4f46e5); /* Gradient button background */
+  color: #fff; /* White text */
+  padding: 16px 24px; /* Button padding */
+  border-radius: 12px; /* Rounded corners */
+  border: none; /* Remove default border */
+  font-weight: 600; /* Medium bold text */
+  font-size: 1.1rem; /* Slightly larger text */
+  cursor: pointer; /* Pointer on hover */
+  text-decoration: none; /* Remove underline if link */
+  transition: transform 0.2s ease, box-shadow 0.2s ease; /* Smooth hover transitions */
+}
+.loginBtn:hover {
+  transform: translateY(-2px); /* Slight upward movement on hover */
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.5); /* Subtle shadow on hover */
+}
+
+/* ==============================
+   Login page layout
+   ============================== */
+.loginPage {
+  display: flex; /* Flex layout to place left and right sections side by side */
+  min-height: 100vh; /* Full viewport height */
+}
+
+/* ==============================
+   Left section with background image
+   ============================== */
+.leftSection {
+  flex: 1; /* Take equal width */
+  background-size: cover; /* Cover entire section with image */
+  background-position: center; /* Center image */
+  background-repeat: no-repeat; /* Do not repeat image */
+  position: relative; /* Relative for positioning content inside */
+  display: flex; /* Flex layout for inner content */
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
+}
+
+.leftContent {
+  background: rgba(0, 0, 0, 0.5); /* Semi-transparent overlay */
+  padding: 40px; /* Inner padding */
+  border-radius: 16px; /* Rounded corners */
+  color: #ffffff; /* White text */
+  max-width: 400px; /* Limit content width */
+  text-align: center; /* Center text */
+}
+.leftContent h1 {
+  font-size: 2.8rem; /* Large heading */
+  margin-bottom: 16px; /* Space below heading */
+}
+.leftContent p {
+  font-size: 1.2rem; /* Paragraph size */
+  line-height: 1.5; /* Readable line spacing */
+}
+
+/* ==============================
+   Right section with login form
+   ============================== */
+.rightSection {
+  flex: 1; /* Equal width */
+  display: flex; /* Flex layout */
+  flex-direction: column; /* Stack children vertically */
+  justify-content: center; /* Center vertically */
+  align-items: center; /* Center horizontally */
+  background: rgba(0, 0, 0, 0.1); /* Slightly tinted background */
+  position: relative; /* Relative positioning */
+  padding: 80px 32px; /* Internal spacing */
+}
+
+.loginBox {
+  background: var(--glass); /* Glass effect background */
+  padding: 40px; /* Inner padding */
+  border-radius: 16px; /* Rounded corners */
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4); /* Shadow for depth */
+  width: 100%; /* Full width */
+  max-width: 400px; /* Limit max width */
+  display: flex; /* Flex layout for inner elements */
+  flex-direction: column; /* Stack elements vertically */
+  gap: 16px; /* Space between elements */
+}
+
+.loginBox h2 {
+  font-size: 2rem; /* Heading size */
+  margin-bottom: 16px; /* Space below heading */
+  text-align: center; /* Centered text */
+}
+
+.inputField {
+  width: 100%; /* Full width input */
+  padding: 12px; /* Inner padding */
+  border-radius: 10px; /* Rounded corners */
+  border: 1px solid rgba(255, 255, 255, 0.7); /* Semi-transparent border */
+  background: rgba(0, 0, 0, 0.55); /* Slightly transparent background */
+  color: #cbd5e1; /* Input text color */
+}
+
+/* ==============================
+   Other containers and utility classes
+   ============================== */
+.buttonGroup {
+  display: flex; /* Flex layout for buttons */
+  gap: 14px; /* Space between buttons */
+}
+.linkGroup {
+  display: flex; /* Flex layout */
+  justify-content: space-between; /* Space between links */
+  width: 100%; /* Full width */
+}
