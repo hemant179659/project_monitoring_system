@@ -199,3 +199,96 @@ body, html, #root {
   justify-content: space-between; /* Space between links */
   width: 100%; /* Full width */
 }
+
+/* ==================================================================================
+   RESPONSIVE STYLES (MOBILE & TABLET)
+   Styles for screens with a max width of 768px (e.g., standard tablets and phones)
+   ================================================================================== */
+@media (max-width: 768px) {
+  
+  /* --- Global Adjustments --- */
+  .backBtn {
+    top: 15px;
+    left: 15px;
+    padding: 10px 14px; /* Smaller padding */
+    font-size: 20px; /* Smaller icon */
+  }
+
+  /* --- Home Page Adjustments --- */
+  .homeContainer {
+    padding: 60px 20px 20px 20px; /* Increased top padding for content below back button */
+  }
+
+  .homeTitle {
+    font-size: 2.2rem; /* Smaller title size for mobile */
+    margin-bottom: 20px;
+  }
+
+  .homeButtonGroup {
+    flex-direction: column; /* Stack buttons vertically on mobile */
+    gap: 16px; /* Reduced gap between stacked buttons */
+    width: 100%; /* Full width for stacked buttons */
+    max-width: 300px; /* Limit the max width of the button group */
+  }
+
+  .loginBtn {
+    padding: 14px 20px; /* Slightly smaller button padding */
+    font-size: 1rem; /* Slightly smaller text */
+    width: 100%; /* Make buttons fill the width of the group */
+  }
+
+  /* --- Login Page Adjustments (Major change: Stacking the left and right sections) --- */
+  .loginPage {
+    flex-direction: column; /* Stack sections vertically for mobile */
+    min-height: auto; /* Reset min-height */
+  }
+  
+  .leftSection {
+    flex: none; /* Do not take equal width */
+    height: 30vh; /* Give the image a fixed, smaller height (e.g., 30% of viewport height) */
+    min-height: 200px; /* Ensure a minimum height */
+    order: 1; /* Place the image section on top */
+  }
+
+  .leftContent {
+    background: transparent; /* Remove overlay/background for cleaner look */
+    padding: 20px; /* Reduced padding */
+    max-width: none; /* Allow full width */
+    text-shadow: 2px 2px 5px rgba(0,0,0,0.9); /* Stronger shadow to make text readable on image */
+  }
+  .leftContent h1 {
+    font-size: 2rem; /* Smaller heading */
+    margin-bottom: 8px;
+  }
+  .leftContent p {
+    font-size: 1rem; /* Smaller paragraph text */
+  }
+
+  .rightSection {
+    flex: none; /* Do not take equal width */
+    padding: 40px 20px; /* Reduced vertical padding */
+    order: 2; /* Place the form section below */
+    min-height: 70vh; /* Ensure the form takes up the rest of the screen */
+  }
+
+  .loginBox {
+    padding: 30px 25px; /* Reduced padding inside the login box */
+    max-width: 100%; /* Allow the box to take more width on mobile */
+  }
+
+  .loginBox h2 {
+    font-size: 1.8rem; /* Smaller heading */
+    margin-bottom: 12px;
+  }
+  
+  /* --- Utility Adjustments --- */
+  .buttonGroup {
+    flex-direction: column; /* Stack button groups vertically */
+    gap: 10px; /* Reduced gap */
+  }
+  .linkGroup {
+    flex-direction: column; /* Stack links vertically */
+    align-items: center; /* Center links */
+    gap: 8px; /* Space between links */
+  }
+}
