@@ -9,46 +9,34 @@ import styles from "../styles/dashboard.module.css";
 export default function AdminDashboard() {
   const navigate = useNavigate();
 
-  // 🔹 Store all projects
   const [projects, setProjects] = useState([]);
-
-  // 🔹 Stats for each department (completed, pending, total)
   const [deptStats, setDeptStats] = useState([]);
-
-  // 🔹 Overall summary counts
   const [totalCounts, setTotalCounts] = useState({ total: 0, completed: 0, pending: 0 });
 
-  // Admin name displayed on sidebar
   const adminName = "Admin";
 
-  // 🔒 Protect admin dashboard page from unauthorized access
   useEffect(() => {
     const isAdmin = localStorage.getItem("isAdmin");
     if (!isAdmin) navigate("/admin-login", { replace: true });
   }, [navigate]);
 
-  // 📊 Load all projects and compute dashboard statistics
   useEffect(() => {
-    // Load all projects from localStorage
     const allProjects = JSON.parse(localStorage.getItem("projects")) || [];
     setProjects(allProjects);
 
-    // Total, completed, and pending counts
     const total = allProjects.length;
     const completed = allProjects.filter(p => p.progress === 100).length;
     const pending = total - completed;
 
     setTotalCounts({ total, completed, pending });
 
-    // 📌 Compute department-wise stats
     const depts = {};
-
     allProjects.forEach(p => {
       if (!depts[p.department]) {
         depts[p.department] = { completed: 0, pending: 0, total: 0 };
       }
-
       depts[p.department].total += 1;
+
       if (p.progress === 100) {
         depts[p.department].completed += 1;
       } else {
@@ -56,7 +44,6 @@ export default function AdminDashboard() {
       }
     });
 
-    // Convert object → array for chart data
     const statsArray = Object.keys(depts).map(d => ({
       department: d,
       ...depts[d]
@@ -65,10 +52,8 @@ export default function AdminDashboard() {
     setDeptStats(statsArray);
   }, []);
 
-  // 🎨 Pie chart colors
   const COLORS = ["#4CAF50", "#FF9800", "#2196F3", "#FF5722", "#9C27B0", "#FFC107"];
 
-  // 🚪 Logout admin
   const handleLogout = () => {
     localStorage.removeItem("isAdmin");
     navigate("/admin-login", { replace: true });
@@ -77,7 +62,7 @@ export default function AdminDashboard() {
   return (
     <div className={styles.container}>
 
-      {/* ================= Sidebar ================ */}
+      {/* Sidebar */}
       <aside className={styles.sidebar}>
         <div className={styles.profile}>
           <FaUserCircle size={48} color="#fff" />
@@ -92,56 +77,51 @@ export default function AdminDashboard() {
         </ul>
       </aside>
 
-      {/* ================= Main Content ================ */}
+      {/* Main Content */}
       <main className={styles.main}>
         <h1 style={{ opacity: 1 }}>Admin Dashboard</h1>
 
-        {/* ======= Summary Cards ======= */}
+        {/* Summary Cards */}
         <div className={styles.cards}>
-          {/* Total Projects */}
-          <div
-            className={styles.card}
-            style={{ cursor: "pointer" }}
-            onClick={() => navigate("/admin-project-list")}
-          >
+          <div className={styles.card} onClick={() => navigate("/admin-project-list")}>
             <h3 style={{ opacity: 1 }}>Total Projects</h3>
             <p style={{ opacity: 1 }}>{totalCounts.total}</p>
           </div>
 
-          {/* Completed */}
-          <div
-            className={styles.card}
-            style={{ cursor: "pointer" }}
-            onClick={() => navigate("/completed")}
-          >
+          <div className={styles.card} onClick={() => navigate("/completed")}>
             <h3 style={{ opacity: 1 }}>Completed</h3>
             <p style={{ color: "#4CAF50", opacity: 1 }}>{totalCounts.completed}</p>
           </div>
 
-          {/* Pending */}
-          <div
-            className={styles.card}
-            style={{ cursor: "pointer" }}
-            onClick={() => navigate("/pending")}
-          >
+          <div className={styles.card} onClick={() => navigate("/pending")}>
             <h3 style={{ opacity: 1 }}>Pending</h3>
             <p style={{ color: "#FF9800", opacity: 1 }}>{totalCounts.pending}</p>
           </div>
         </div>
 
-        {/* ======= Department Pie Charts ======= */}
+        {/* Pie Charts */}
         <div style={{
           maxWidth: "900px",
           margin: "40px auto",
           display: "flex",
           gap: "50px",
           flexWrap: "wrap",
+          alignItems: "flex-start",
           opacity: 1
         }}>
 
-          {/* Completed per department */}
-          <div style={{ flex: 1, minWidth: "300px" }}>
-            <h3 style={{ textAlign: "center", opacity: 1, color: "#000" }}>
+          {/* Completed chart */}
+          <div style={{
+            flex: 1,
+            minWidth: "300px",
+            height: "420px"
+          }}>
+            <h3 style={{
+              textAlign: "center",
+              opacity: 1,
+              color: "#000",
+              minHeight: "50px"   // ⭐ FIX HERE
+            }}>
               Completed Projects by Department
             </h3>
 
@@ -161,16 +141,24 @@ export default function AdminDashboard() {
                   ))}
                 </Pie>
 
-                {/* Tooltip and legend styling */}
                 <Tooltip contentStyle={{ opacity: 1, color: "#000" }} itemStyle={{ opacity: 1 }} />
                 <Legend wrapperStyle={{ opacity: 1, color: "#000" }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
 
-          {/* Pending per department */}
-          <div style={{ flex: 1, minWidth: "300px" }}>
-            <h3 style={{ textAlign: "center", opacity: 1, color: "#000" }}>
+          {/* Pending chart */}
+          <div style={{
+            flex: 1,
+            minWidth: "300px",
+            height: "420px"
+          }}>
+            <h3 style={{
+              textAlign: "center",
+              opacity: 1,
+              color: "#000",
+              minHeight: "50px"   // ⭐ FIX HERE
+            }}>
               Pending Projects by Department
             </h3>
 
@@ -195,6 +183,7 @@ export default function AdminDashboard() {
               </PieChart>
             </ResponsiveContainer>
           </div>
+
         </div>
       </main>
     </div>

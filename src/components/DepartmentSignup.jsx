@@ -16,7 +16,7 @@ export default function DepartmentSignup() {
   // Predefined list of departments
   const departments = [
     "Agriculture",
-    "Irrigation",
+    "PWD",
     "Forestry",
     "Horticulture",
     "Vetenary"

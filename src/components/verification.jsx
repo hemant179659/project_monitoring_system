@@ -15,7 +15,7 @@ export default function Verification() {
   const departmentCodes = {
     agriculture: "1234",
     horticulture: "4321",
-    irrigation: "5678",
+    pwd: "5678",
     forestry: "2468",
     vetenary: "1357"
   };
