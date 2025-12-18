@@ -1,140 +1,196 @@
-// 📌 ProjectList.jsx — Displays department-specific project list with login protection
-// NOTE: No logic changed — only detailed comments added for clarity.
-
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import styles from "../styles/dashboard.module.css";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function ProjectList() {
-  const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
-
-  // ✅ Get currently logged-in department from localStorage
   const loggedDept = localStorage.getItem("loggedInDepartment");
 
-  // ------------------------------------------------------------
-  // 🔐 LOGIN VALIDATION + BACK BUTTON PROTECTION
-  // ------------------------------------------------------------
+  // -------------------------------
+  // Login protection
+  // -------------------------------
   useEffect(() => {
-    // If user is not logged in, redirect to department login page
     if (!loggedDept) {
-      window.location.replace("/dept-login"); 
+      toast.error("Please login first");
+      window.location.replace("/dept-login");
+      return;
     }
 
-    // 🚫 Prevent using browser BACK button to access protected pages
     const handlePopState = () => {
-      // If user logs out and tries to go back, force redirect again
       if (!localStorage.getItem("loggedInDepartment")) {
+        toast.warning("Session expired");
         window.location.replace("/dept-login");
       }
     };
 
     window.addEventListener("popstate", handlePopState);
-
-    // Cleanup event listener
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-    };
+    return () => window.removeEventListener("popstate", handlePopState);
   }, [loggedDept]);
 
-  // ------------------------------------------------------------
-  // 📦 LOAD PROJECTS FROM LOCALSTORAGE (department-wise filtering)
-  // ------------------------------------------------------------
+  // -------------------------------
+  // Fetch projects
+  // -------------------------------
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("projects")) || [];
+    const loadProjects = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:8000/department/projects?department=${loggedDept}`
+        );
+        setProjects(res.data.projects || []);
+      } catch (error) {
+        console.error("Error fetching projects:", error);
+        toast.error("Failed to fetch projects");
+      }
+    };
 
-    // Filter projects only belonging to the logged-in department
-    const deptProjects = stored.filter(p => p.department === loggedDept);
-
-    setProjects(deptProjects);
+    if (loggedDept) loadProjects();
   }, [loggedDept]);
 
-  // ------------------------------------------------------------
-  // 🗑️ DELETE PROJECT (only inside current department)
-  // ------------------------------------------------------------
-  const handleDelete = (name) => {
-    if (window.confirm(`Are you sure you want to delete project "${name}"?`)) {
-      const stored = JSON.parse(localStorage.getItem("projects")) || [];
+  // -------------------------------
+  // Delete project
+  // -------------------------------
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this project?")) return;
 
-      // Remove only the project that matches both name + department
-      const updated = stored.filter(
-        p => !(p.name === name && p.department === loggedDept)
-      );
-
-      // Save updated list in localStorage
-      localStorage.setItem("projects", JSON.stringify(updated));
-
-      // Refresh UI with department-filtered data
-      setProjects(updated.filter(p => p.department === loggedDept));
+    try {
+      await axios.delete(`http://localhost:8000/department/project/${id}`);
+      setProjects((prev) => prev.filter((p) => p._id !== id));
+      toast.success("Project deleted successfully");
+    } catch (err) {
+      console.error("Delete error:", err);
+      toast.error("Failed to delete project");
     }
   };
 
   return (
     <div className={styles.projectWrapper}>
-      {/* Page Header */}
       <div className={styles.headerSection}>
-        <h1 className={styles.pageTitle}>📋 {loggedDept} Project List</h1>
+        <h1 style={{ color: "#000", fontWeight: 700, opacity: 1, marginBottom: "20px" }}>
+          📋 {loggedDept} Project List
+        </h1>
       </div>
 
-      {/* Main Card */}
       <div className={styles.projectCard}>
-        {/* Message if department has no projects */}
         {projects.length === 0 && (
-          <p className={styles.emptyMsg}>No projects found for {loggedDept}.</p>
+          <p style={{ color: "#000", opacity: 1 }}>No projects found.</p>
         )}
 
-        {/* Project Table */}
-        <table className={styles.projectTable}>
+        <table
+          className={styles.projectTable}
+          style={{
+            tableLayout: "fixed",
+            width: "100%",
+            borderCollapse: "collapse",
+            columnGap: "10px",
+          }}
+        >
           <thead>
             <tr>
-              <th className={styles.tableHeading}>Project Name</th>
-              <th className={styles.tableHeading}>Progress</th>
-              <th className={styles.tableHeading}>Start Date</th>
-              <th className={styles.tableHeading}>End Date</th>
-              <th className={styles.tableHeading}>Remarks</th>
-              <th className={styles.tableHeading}>Action</th>
+              <th style={{ color: "#000", fontWeight: 700 }}>Project Name</th>
+              <th style={{ color: "#000", fontWeight: 700 }}>Progress</th>
+              <th style={{ color: "#000", fontWeight: 700 }}>Start Date</th>
+              <th style={{ color: "#000", fontWeight: 700 }}>Estimated End Date</th>
+              <th style={{ color: "#000", fontWeight: 700 }}>Contact Person</th>
+              <th style={{ color: "#000", fontWeight: 700 }}>Designation</th>
+              <th style={{ color: "#000", fontWeight: 700 }}>Contact Number</th>
+              <th style={{ color: "#000", fontWeight: 700 }}>Budget Allocated</th>
+              <th style={{ color: "#000", fontWeight: 700 }}>Remaining Budget</th>
+              <th style={{ color: "#000", fontWeight: 700 }}>Remarks</th>
+              <th style={{ color: "#000", fontWeight: 700 }}>Action</th>
             </tr>
           </thead>
 
           <tbody>
-            {projects.map((p, idx) => (
-              <tr key={idx} className={styles.tableRow}>
-                
-                {/* Project name */}
-                <td>{p.name}</td>
+            {projects.map((p) => (
+              <tr key={p._id}>
+                <td style={{ padding: "8px 12px" }}>
+                  <div
+                    style={{
+                      maxWidth: "200px",
+                      whiteSpace: "nowrap",
+                      overflowX: "auto",
+                      padding: "4px 6px",
+                      border: "1px solid #ddd",
+                      borderRadius: "4px",
+                      backgroundColor: "#fff",
+                      color: "#000",
+                      cursor: "pointer",
+                    }}
+                    title={p.name}
+                  >
+                    {p.name}
+                  </div>
+                </td>
 
-                {/* Progress bar */}
-                <td>
-                  <div className={styles.progressBar}>
+                <td style={{ padding: "8px 12px" }}>
+                  <div
+                    style={{
+                      background: "#ddd",
+                      borderRadius: "8px",
+                      overflow: "hidden",
+                      height: "16px",
+                      marginBottom: "4px",
+                    }}
+                  >
                     <div
-                      className={styles.progressFill}
-                      style={{ width: `${p.progress}%` }}
+                      style={{
+                        width: `${p.progress}%`,
+                        background: p.progress === 100 ? "#4CAF50" : "#FF9800",
+                        height: "100%",
+                        transition: "width 0.6s ease",
+                      }}
                     ></div>
                   </div>
-                  <span className={styles.progressText}>{p.progress}%</span>
+                  <span style={{ color: "#000", opacity: 1 }}>{p.progress}%</span>
                 </td>
 
-                {/* Dates */}
-                <td>{p.startDate}</td>
-                <td>{p.endDate}</td>
-
-                {/* Remarks */}
-                <td>
-                  <span className={styles.remarkTag}>
-                    {p.remarks || "No remarks"}
-                  </span>
+                <td style={{ color: "#000", opacity: 1 }}>
+                  {new Date(p.startDate).toLocaleDateString()}
+                </td>
+                <td style={{ color: "#000", opacity: 1 }}>
+                  {new Date(p.endDate).toLocaleDateString()}
+                </td>
+                <td style={{ color: "#000", opacity: 1 }}>{p.contactPerson || "-"}</td>
+                <td style={{ color: "#000", opacity: 1 }}>{p.designation || "-"}</td>
+                <td style={{ color: "#000", opacity: 1 }}>{p.contactNumber || "-"}</td>
+                <td style={{ color: "#000", opacity: 1 }}>{p.budgetAllocated || "-"}</td>
+                <td style={{ color: "#000", opacity: 1 }}>{p.remainingBudget || "-"}</td>
+                <td style={{ padding: "8px 12px" }}>
+                  <div
+                    style={{
+                      maxWidth: "200px",
+                      whiteSpace: "nowrap",
+                      overflowX: "auto",
+                      padding: "4px 6px",
+                      border: "1px solid #ddd",
+                      borderRadius: "4px",
+                      backgroundColor: "#fff",
+                      color: "#000",
+                      cursor: "pointer",
+                    }}
+                    title={p.remarks || "-"}
+                  >
+                    {p.remarks || "-"}
+                  </div>
                 </td>
 
-                {/* Delete button */}
-                <td>
+                <td style={{ padding: "8px 12px" }}>
                   <button
-                    className={styles.deleteBtn}
-                    onClick={() => handleDelete(p.name)}
+                    style={{
+                      backgroundColor: "#FF4D4F",
+                      color: "#fff",
+                      padding: "4px 8px",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => handleDelete(p._id)}
                   >
                     Delete
                   </button>
                 </td>
-
               </tr>
             ))}
           </tbody>

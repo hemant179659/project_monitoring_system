@@ -1,171 +1,296 @@
-// Updated DailyReporting.jsx with department-based filtering, login protection, and remarks saving
-// No CSS or layout changes
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import styles from "../styles/dashboard.module.css";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function DailyReporting() {
   const navigate = useNavigate();
-
-  // State to store department projects
   const [projects, setProjects] = useState([]);
-
-  // Selected project for updating
   const [selectedProject, setSelectedProject] = useState("");
-
-  // Progress value entered by user
   const [progressUpdate, setProgressUpdate] = useState("");
-
-  // Remarks entered by user
   const [remarks, setRemarks] = useState("");
+  const [remainingBudget, setRemainingBudget] = useState("");
+  const [images, setImages] = useState([]);
 
-  // ✅ Get currently logged-in department from localStorage
   const loggedDept = localStorage.getItem("loggedInDepartment");
 
-  /**
-   * ---------------------------------------------------------
-   * 🔐 LOGIN VALIDATION + BLOCKING BROWSER BACK/FORWARD
-   * ---------------------------------------------------------
-   * - If department is not logged in → redirect to login page
-   * - Use window.location.replace() to prevent going back
-   * - Add popstate listener to block browser back/forward access
-   */
+  // -------------------------------
+  // Login check
+  // -------------------------------
   useEffect(() => {
-    // If not logged in, redirect immediately
     if (!loggedDept) {
+      toast.error("Please login first");
       window.location.replace("/dept-login");
     }
+  }, [loggedDept]);
 
-    // Block back/forward navigation if logged out
-    const handlePopState = () => {
-      if (!localStorage.getItem("loggedInDepartment")) {
-        window.location.replace("/dept-login");
+  // -------------------------------
+  // Load department projects
+  // -------------------------------
+  useEffect(() => {
+    const loadProjects = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:8000/department/projects?department=${loggedDept}`
+        );
+        setProjects(res.data.projects || []);
+      } catch (err) {
+        console.error("Error loading projects:", err);
+        toast.error("Failed to load projects");
       }
     };
-
-    // Attach event listener
-    window.addEventListener("popstate", handlePopState);
-
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-    };
+    if (loggedDept) loadProjects();
   }, [loggedDept]);
 
-  /**
-   * ---------------------------------------------------------
-   * 📌 LOAD PROJECTS BELONGING ONLY TO LOGGED-IN DEPARTMENT
-   * ---------------------------------------------------------
-   * - Fetch all projects stored in localStorage
-   * - Filter only those that match this department
-   * - Store department-specific projects in state
-   */
-  useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("projects")) || [];
+  // -------------------------------
+  // Handle image selection
+  // -------------------------------
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
 
-    // Filter department-wise projects
-    const deptProjects = stored.filter(
-      (p) => p.department === loggedDept
-    );
-
-    setProjects(deptProjects);
-  }, [loggedDept]);
-
-  /**
-   * ---------------------------------------------------------
-   * 🚀 UPDATE PROJECT PROGRESS & REMARKS
-   * ---------------------------------------------------------
-   * - Must select a project and enter progress
-   * - Update the matching project inside localStorage
-   * - Save remarks (if any)
-   * - Refresh department project list
-   * - Redirect to dashboard after update
-   */
-  const handleUpdate = () => {
-    // Validation for required inputs
-    if (!selectedProject || progressUpdate === "") {
-      return alert("Please select a project and enter progress.");
+    if (files.length + images.length > 5) {
+      toast.warning("Maximum 5 images allowed");
+      return;
     }
 
-    const stored = JSON.parse(localStorage.getItem("projects")) || [];
-
-    // Update matching project with new progress & remarks
-    const updatedAll = stored.map((p) =>
-      p.name === selectedProject && p.department === loggedDept
-        ? {
-            ...p,
-            progress: Number(progressUpdate),
-            remarks: remarks || ""
-          }
-        : p
+    const validFiles = files.filter(
+      (file) => file.type === "image/jpeg" && file.size <= 2 * 1024 * 1024
     );
 
-    // Store updated data back to storage
-    localStorage.setItem("projects", JSON.stringify(updatedAll));
+    if (validFiles.length !== files.length) {
+      toast.warning("Only JPG images ≤ 2MB are allowed");
+    }
 
-    // Refresh UI with only this department's updated projects
-    setProjects(updatedAll.filter((p) => p.department === loggedDept));
+    setImages((prev) => [...prev, ...validFiles]);
+  };
 
-    alert("Progress updated successfully!");
+  const removeImage = (index) =>
+    setImages((prev) => prev.filter((_, i) => i !== index));
 
-    // Reset fields
-    setProgressUpdate("");
-    setRemarks("");
+  // -------------------------------
+  // Handle project update
+  // -------------------------------
+  const handleUpdate = async () => {
+    if (!selectedProject || progressUpdate === "") {
+      toast.warning("Please select a project and enter progress");
+      return;
+    }
 
-    // Redirect back to department dashboard
-    navigate("/dept-dashboard");
+    const formData = new FormData();
+    formData.append("progress", progressUpdate);
+    formData.append("remarks", remarks || "");
+    formData.append("remainingBudget", remainingBudget || "");
+    images.forEach((img) => formData.append("photos", img));
+
+    try {
+      const res = await axios.put(
+        `http://localhost:8000/department/project/update/${selectedProject}`,
+        formData
+      );
+
+      toast.success(res.data.message || "Progress updated successfully!");
+
+      setProgressUpdate("");
+      setRemarks("");
+      setRemainingBudget("");
+      setImages([]);
+      setSelectedProject("");
+
+      navigate("/dept-dashboard");
+    } catch (err) {
+      console.error("Update error:", err.response || err);
+      toast.error(err.response?.data?.message || "Failed to update progress");
+    }
   };
 
   return (
-    <div className={styles.reportingMain}>
-      {/* Page Heading */}
-      <h1 className={styles.pageTitle}>Daily Reporting - {loggedDept}</h1>
-
-      {/* Reporting Card */}
-      <div className={styles.reportingCard}>
-        <h2 className={styles.sectionTitle}>Update Project Progress</h2>
-
-        {/* Project Dropdown */}
-        <label className={styles.reportingLabel}>Select Project</label>
-        <select
-          className={styles.reportingSelect}
-          value={selectedProject}
-          onChange={(e) => setSelectedProject(e.target.value)}
+    <div
+      className={styles.reportingMain}
+      style={{
+        minHeight: "100vh",
+        background: "#f4f6f9",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center", // ✅ vertical center
+        padding: "20px",
+      }}
+    >
+      <div style={{ width: "100%", maxWidth: "650px" }}>
+        <h1
+          style={{
+            textAlign: "center",
+            marginBottom: "25px",
+            color: "#222",
+            opacity: 1, // ✅ full visibility
+            fontWeight: "700",
+          }}
         >
-          <option value="">-- Select Project --</option>
-          {projects.map((p, idx) => (
-            <option key={idx} value={p.name}>
-              {p.name}
-            </option>
-          ))}
-        </select>
+          Daily Reporting – {loggedDept}
+        </h1>
 
-        {/* Progress Input */}
-        <label className={styles.reportingLabel}>Progress (%)</label>
-        <input
-          className={styles.reportingInput}
-          type="number"
-          placeholder="Enter progress"
-          value={progressUpdate}
-          onChange={(e) => setProgressUpdate(e.target.value)}
-          min="0"
-          max="100"
-        />
+        <div
+          className={styles.reportingCard}
+          style={{
+            background: "#ffffff",
+            padding: "28px",
+            borderRadius: "12px",
+            boxShadow: "0 6px 18px rgba(0,0,0,0.12)",
+            opacity: 1, // ✅ no faded card
+          }}
+        >
+          <h2 style={{ marginBottom: "20px", color: "#333", fontWeight: 600 }}>
+            Update Project Progress
+          </h2>
 
-        {/* Remarks */}
-        <label className={styles.ReportingLabel}>Remarks</label>
-        <textarea
-          className={styles.reportingTextarea}
-          placeholder="Add remarks (optional)"
-          value={remarks}
-          onChange={(e) => setRemarks(e.target.value)}
-        ></textarea>
+          <label style={labelStyle}>Select Project</label>
+          <select
+            value={selectedProject}
+            onChange={(e) => setSelectedProject(e.target.value)}
+            style={inputStyle}
+          >
+            <option value="">-- Select Project --</option>
+            {projects.map((p) => (
+              <option key={p._id} value={p._id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
 
-        {/* Submit Button */}
-        <button className={styles.reportingButton} onClick={handleUpdate}>
-          Update Progress
-        </button>
+          <label style={labelStyle}>Progress (%)</label>
+          <input
+            type="number"
+            min="0"
+            max="100"
+            value={progressUpdate}
+            onChange={(e) => setProgressUpdate(e.target.value)}
+            placeholder="Enter progress"
+            style={inputStyle}
+          />
+
+          <label style={labelStyle}>Remaining Budget</label>
+          <input
+            type="number"
+            min="0"
+            value={remainingBudget}
+            onChange={(e) => setRemainingBudget(e.target.value)}
+            placeholder="Enter remaining budget"
+            style={inputStyle}
+          />
+
+          <label style={labelStyle}>Remarks</label>
+          <textarea
+            rows={4}
+            value={remarks}
+            onChange={(e) => setRemarks(e.target.value)}
+            placeholder="Add remarks"
+            style={{ ...inputStyle, resize: "vertical" }}
+          />
+
+          <label style={labelStyle}>
+            Upload up to 5 JPG Photos (≤2MB each)
+          </label>
+          <input
+            type="file"
+            accept="image/jpeg"
+            multiple
+            onChange={handleImageChange}
+            style={{ marginTop: "8px", opacity: 1 }}
+          />
+
+          <div style={imageGridStyle}>
+            {images.map((img, i) => (
+              <div key={i} style={imageBoxStyle}>
+                <img
+                  src={URL.createObjectURL(img)}
+                  alt="upload"
+                  style={imageStyle}
+                />
+                <button
+                  onClick={() => removeImage(i)}
+                  style={removeBtnStyle}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <button onClick={handleUpdate} style={submitBtnStyle}>
+            Update Progress
+          </button>
+        </div>
       </div>
     </div>
   );
 }
+
+/* -------------------------------
+   Inline Styles
+-------------------------------- */
+const labelStyle = {
+  fontWeight: 600,
+  color: "#222",
+  opacity: 1,
+};
+
+const inputStyle = {
+  width: "100%",
+  padding: "10px",
+  marginTop: "6px",
+  marginBottom: "15px",
+  borderRadius: "6px",
+  border: "1px solid #bbb",
+  color: "#000",
+  opacity: 1,
+};
+
+const submitBtnStyle = {
+  marginTop: "25px",
+  width: "100%",
+  background: "#4CAF50",
+  color: "#fff",
+  padding: "12px",
+  fontSize: "16px",
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer",
+  fontWeight: 600,
+};
+
+const imageGridStyle = {
+  display: "flex",
+  gap: "12px",
+  flexWrap: "wrap",
+  marginTop: "15px",
+};
+
+const imageBoxStyle = {
+  position: "relative",
+  width: "90px",
+  height: "90px",
+  borderRadius: "8px",
+  overflow: "hidden",
+  boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+};
+
+const imageStyle = {
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+};
+
+const removeBtnStyle = {
+  position: "absolute",
+  top: "4px",
+  right: "4px",
+  background: "rgba(255,77,79,1)",
+  color: "#fff",
+  border: "none",
+  borderRadius: "50%",
+  width: "22px",
+  height: "22px",
+  cursor: "pointer",
+  fontWeight: "bold",
+};

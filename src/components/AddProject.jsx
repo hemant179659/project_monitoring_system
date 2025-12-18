@@ -1,128 +1,246 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import styles from "../styles/dashboard.module.css";
+import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function AddProject() {
   const navigate = useNavigate();
 
-  // 🔹 Local state for form fields
   const [name, setName] = useState("");
   const [progress, setProgress] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [contactPerson, setContactPerson] = useState("");
+  const [designation, setDesignation] = useState("");
+  const [contactNumber, setContactNumber] = useState("");
+  const [budget, setBudget] = useState("");
+  const [remarks, setRemarks] = useState("");
 
-  // 🔹 Fetch logged-in department from localStorage
-  //    This ensures the project is linked to the correct department
   const loggedDept = localStorage.getItem("loggedInDepartment");
 
-  // 🔒 Restrict access to AddProject page
   useEffect(() => {
-    // If department is NOT logged in → redirect to login page
     if (!loggedDept) {
-      window.location.replace("/dept-login");
+      toast.error("You must log in first");
+      navigate("/dept-login", { replace: true });
+    }
+  }, [loggedDept, navigate]);
+
+  const handleAddProject = async () => {
+    // Convert numeric fields
+    const progressValue = Number(progress);
+    const budgetValue = Number(budget);
+
+    if (
+      !name ||
+      !startDate ||
+      !endDate ||
+      !contactPerson ||
+      !designation ||
+      !contactNumber ||
+      progress === "" ||
+      isNaN(progressValue) ||
+      progressValue < 0 ||
+      progressValue > 100 ||
+      budget === "" ||
+      isNaN(budgetValue) ||
+      budgetValue <= 0
+    ) {
+      toast.warning(
+        "Please fill all fields correctly. Progress must be 0–100 and budget must be greater than 0."
+      );
+      return;
     }
 
-    // 🔐 Prevent navigating back to this page after logout
-    const handlePopState = () => {
-      // If no department is logged in anymore → block access
-      if (!localStorage.getItem("loggedInDepartment")) {
-        window.location.replace("/dept-login");
-      }
-    };
+    try {
+      await axios.post("http://localhost:8000/department/add-project", {
+        name,
+        progress: progressValue,
+        startDate,
+        endDate,
+        department: loggedDept,
+        contactPerson,
+        designation,
+        contactNumber,
+        budgetAllocated: budgetValue,
+        remarks,
+      });
 
-    // Listen for browser back/forward navigation
-    window.addEventListener("popstate", handlePopState);
-
-    // Cleanup
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-    };
-  }, [loggedDept]);
-
-  // ➕ Add new project to localStorage
-  const handleAddProject = () => {
-    // Basic validation for fields + progress range 0–100
-    if (!name || !startDate || !endDate || progress === "" || progress < 0 || progress > 100) {
-      return alert("Please fill all fields correctly. Progress should be 0-100.");
+      toast.success("Project added successfully!");
+      setTimeout(() => navigate("/dept-dashboard", { replace: true }), 1000);
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || "Failed to add project");
     }
+  };
 
-    // Get previous projects or initialize empty array
-    const storedProjects = JSON.parse(localStorage.getItem("projects")) || [];
+  // Inline styles
+  const containerStyle = {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    minHeight: "100vh",
+    background: "#f4f6f9",
+    padding: "20px",
+  };
 
-    // New project object linked to the logged-in department
-    const newProject = {
-      name,
-      progress: Number(progress),
-      startDate,
-      endDate,
-      department: loggedDept,
-    };
+  const formStyle = {
+    background: "#fff",
+    padding: "30px",
+    borderRadius: "12px",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+    width: "100%",
+    maxWidth: "600px",
+  };
 
-    // Add new project to list
-    storedProjects.push(newProject);
+  const inputGroupStyle = {
+    display: "flex",
+    flexDirection: "column",
+    marginBottom: "15px",
+  };
 
-    // Save updated array back to localStorage
-    localStorage.setItem("projects", JSON.stringify(storedProjects));
+  const labelStyle = {
+    marginBottom: "6px",
+    fontWeight: 600,
+    color: "#333",
+  };
 
-    alert(`Project "${name}" added successfully!`);
+  const inputStyle = {
+    padding: "10px 12px",
+    borderRadius: "8px",
+    border: "1px solid #ccc",
+    fontSize: "14px",
+  };
 
-    // Redirect to dashboard (replace prevents going back)
-    window.location.replace("/dept-dashboard");
+  const textareaStyle = {
+    ...inputStyle,
+    minHeight: "80px",
+    resize: "vertical",
+  };
+
+  const buttonStyle = {
+    marginTop: "15px",
+    padding: "12px",
+    width: "100%",
+    background: "#4CAF50",
+    color: "#fff",
+    border: "none",
+    borderRadius: "8px",
+    fontWeight: 600,
+    cursor: "pointer",
+    fontSize: "16px",
   };
 
   return (
-    <div className={styles.main}>
-      <div className={styles.formPage}>
-        <h2>Add Project</h2>
+    <div style={containerStyle}>
+      <ToastContainer position="top-right" autoClose={2000} />
+      <div style={formStyle}>
+        <h2
+          style={{
+            textAlign: "center",
+            marginBottom: "20px",
+            color: "#000",
+            fontWeight: 700,
+            opacity: 1,
+            letterSpacing: "0.5px",
+          }}
+        >
+          Add Project
+        </h2>
 
-        {/* 🔹 Project Name Input */}
-        <div className={styles.inputGroup}>
+        <div style={inputGroupStyle}>
+          <label style={labelStyle}>Project Name</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            required
+            style={inputStyle}
           />
-          <label>Project Name</label>
         </div>
 
-        {/* 🔹 Progress Input */}
-        <div className={styles.inputGroup}>
+        <div style={inputGroupStyle}>
+          <label style={labelStyle}>Progress (%)</label>
           <input
             type="number"
             value={progress}
             onChange={(e) => setProgress(e.target.value)}
             min="0"
             max="100"
-            required
+            style={inputStyle}
           />
-          <label>Progress (%)</label>
         </div>
 
-        {/* 🔹 Start Date Input */}
-        <div className={styles.inputGroup}>
+        <div style={inputGroupStyle}>
+          <label style={labelStyle}>Start Date</label>
           <input
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            required
+            style={inputStyle}
           />
-          <label>Start Date</label>
         </div>
 
-        {/* 🔹 End Date Input */}
-        <div className={styles.inputGroup}>
+        <div style={inputGroupStyle}>
+          <label style={labelStyle}>Estimated End Date</label>
           <input
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            required
+            style={inputStyle}
           />
-          <label>Estimated End Date</label>
         </div>
 
-        {/* Submit Button */}
-        <button className={styles.submitBtn} onClick={handleAddProject}>
+        <div style={inputGroupStyle}>
+          <label style={labelStyle}>Contact Person Name</label>
+          <input
+            type="text"
+            value={contactPerson}
+            onChange={(e) => setContactPerson(e.target.value)}
+            style={inputStyle}
+          />
+        </div>
+
+        <div style={inputGroupStyle}>
+          <label style={labelStyle}>Designation</label>
+          <input
+            type="text"
+            value={designation}
+            onChange={(e) => setDesignation(e.target.value)}
+            style={inputStyle}
+          />
+        </div>
+
+        <div style={inputGroupStyle}>
+          <label style={labelStyle}>Contact Number</label>
+          <input
+            type="tel"
+            value={contactNumber}
+            onChange={(e) => setContactNumber(e.target.value)}
+            style={inputStyle}
+          />
+        </div>
+
+        <div style={inputGroupStyle}>
+          <label style={labelStyle}>Budget Allocated (in lakhs)</label>
+          <input
+            type="number"
+            value={budget}
+            onChange={(e) => setBudget(e.target.value)}
+            min="0"
+            style={inputStyle}
+          />
+        </div>
+
+        <div style={inputGroupStyle}>
+          <label style={labelStyle}>Remarks (optional)</label>
+          <textarea
+            value={remarks}
+            onChange={(e) => setRemarks(e.target.value)}
+            style={textareaStyle}
+          ></textarea>
+        </div>
+
+        <button style={buttonStyle} onClick={handleAddProject}>
           Add Project
         </button>
       </div>

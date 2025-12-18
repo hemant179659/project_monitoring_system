@@ -1,45 +1,54 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import styles from "../styles/dashboard.module.css";
 
 export default function Completed() {
   const navigate = useNavigate();
 
-  // State to store only completed projects
+  // Store completed projects
   const [projects, setProjects] = useState([]);
-  
-  // State to track if the screen is mobile size (e.g., < 768px)
+
+  // Mobile check
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // Function to update isMobile state
   const handleResize = () => {
     setIsMobile(window.innerWidth < 768);
   };
 
   /**
    * -------------------------------
-   * 🔐 Admin Authentication + Data Load
+   * 🔐 Admin Auth + Fetch Data
    * -------------------------------
    */
   useEffect(() => {
-    // Add event listener for window resize
     window.addEventListener("resize", handleResize);
-    
+
     const isAdmin = localStorage.getItem("isAdmin");
+    if (!isAdmin) {
+      navigate("/admin-login", { replace: true });
+      return;
+    }
 
-    // Redirect if admin not logged in
-    if (!isAdmin) navigate("/admin-login", { replace: true });
+    const fetchCompletedProjects = async () => {
+      try {
+        const res = await axios.get(
+          "http://localhost:8000/department/projects?all=true"
+        );
 
-    // Load all projects from storage
-    const allProjects = JSON.parse(localStorage.getItem("projects")) || [];
+        if (res.data?.projects) {
+          const completedProjects = res.data.projects.filter(
+            (p) => p.progress === 100
+          );
+          setProjects(completedProjects);
+        }
+      } catch (error) {
+        console.error("Failed to fetch completed projects", error);
+      }
+    };
 
-    // Filter only completed projects
-    const completedProjects = allProjects.filter((p) => p.progress === 100);
+    fetchCompletedProjects();
 
-    // Save completed projects into state
-    setProjects(completedProjects);
-    
-    // Clean up the event listener
     return () => window.removeEventListener("resize", handleResize);
   }, [navigate]);
 
@@ -49,69 +58,67 @@ export default function Completed() {
    * -----------------------------------------
    */
   const departmentGroups = projects.reduce((acc, p) => {
-    if (!acc[p.department]) acc[p.department] = [];  // create department if not exists
-    acc[p.department].push(p);                       // push project into department list
+    if (!acc[p.department]) acc[p.department] = [];
+    acc[p.department].push(p);
     return acc;
   }, {});
-  
-  // Conditional styles for the main container
+
   const mainContainerStyle = {
-    // Mobile: Reduced padding
-    padding: isMobile ? "15px" : "20px", 
+    padding: isMobile ? "15px" : "20px",
   };
-  
-  // Conditional styles for the department card
+
   const departmentCardStyle = {
     marginBottom: "40px",
-    padding: isMobile ? "15px" : "20px", // Reduced padding on mobile
+    padding: isMobile ? "15px" : "20px",
     borderRadius: "12px",
     boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
     backgroundColor: "#fff",
-    opacity: 1
+    opacity: 1,
   };
 
   return (
     <div style={mainContainerStyle}>
       {/* Page Heading */}
       <h1
-        style={{ 
-            opacity: 1, 
-            marginBottom: isMobile ? "20px" : "30px", 
-            textAlign: "center", 
-            color: "#333",
-            fontSize: isMobile ? "24px" : "32px", // Smaller font size on mobile
+        style={{
+          opacity: 1,
+          marginBottom: isMobile ? "20px" : "30px",
+          textAlign: "center",
+          color: "#333",
+          fontSize: isMobile ? "24px" : "32px",
         }}
       >
         Completed Projects
       </h1>
 
-      {/* Show message if no completed projects exist */}
+      {/* Empty state */}
       {Object.keys(departmentGroups).length === 0 && (
         <p style={{ opacity: 1, textAlign: "center", color: "#555" }}>
           No completed projects found.
         </p>
       )}
 
-      {/* Loop through each department and list its completed projects */}
+      {/* Department-wise completed projects */}
       {Object.keys(departmentGroups).map((dept, idx) => (
-        <div
-          key={idx}
-          style={departmentCardStyle}
-        >
-          {/* Department Title */}
-          <h2 style={{ opacity: 1, marginBottom: "20px", color: "#222", fontSize: isMobile ? "20px" : "24px" }}>
+        <div key={idx} style={departmentCardStyle}>
+          <h2
+            style={{
+              opacity: 1,
+              marginBottom: "20px",
+              color: "#222",
+              fontSize: isMobile ? "20px" : "24px",
+            }}
+          >
             {dept} Department
           </h2>
 
-          {/* Table Wrapper for Horizontal Scrolling on Mobile */}
           <div style={{ overflowX: isMobile ? "auto" : "visible" }}>
-            <table 
-                style={{ 
-                    width: "100%", 
-                    borderCollapse: "collapse",
-                    // Ensure the table is wide enough to scroll horizontally on mobile
-                    minWidth: isMobile ? "700px" : "100%", 
-                }}
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                minWidth: isMobile ? "700px" : "100%",
+              }}
             >
               <thead>
                 <tr>
@@ -124,51 +131,51 @@ export default function Completed() {
               </thead>
 
               <tbody>
-                {/* List all completed projects under this department */}
                 {departmentGroups[dept].map((p, i) => (
                   <tr
                     key={i}
                     style={{
-                      backgroundColor: i % 2 === 0 ? "#f9f9f9" : "#ffffff" // alternate row color
+                      backgroundColor:
+                        i % 2 === 0 ? "#f9f9f9" : "#ffffff",
                     }}
                   >
-                    {/* Project Name */}
                     <td style={cellStyle}>{p.name}</td>
 
-                    {/* Completed progress bar */}
                     <td style={cellStyle}>
                       <div
                         style={{
                           background: "#eee",
                           borderRadius: "8px",
                           overflow: "hidden",
-                          height: isMobile ? "15px" : "20px" // Thinner bar on mobile
+                          height: isMobile ? "15px" : "20px",
                         }}
                       >
                         <div
                           style={{
-                            width: `${p.progress}%`,
-                            background: "#4CAF50", // Green for completed
-                            padding: isMobile ? "2px 0" : "4px 0", // Smaller padding
+                            width: "100%",
+                            background: "#4CAF50",
                             textAlign: "center",
                             color: "#fff",
                             fontWeight: "bold",
-                            fontSize: isMobile ? "10px" : "12px" // Smaller text
+                            fontSize: isMobile ? "10px" : "12px",
                           }}
                         >
-                          {p.progress}%
+                          100%
                         </div>
                       </div>
                     </td>
 
-                    {/* Start Date */}
-                    <td style={cellStyle}>{p.startDate}</td>
-                    
-                    {/* End Date */}
-                    <td style={cellStyle}>{p.endDate}</td>
+                    <td style={cellStyle}>
+                      {new Date(p.startDate).toLocaleDateString()}
+                    </td>
 
-                    {/* If no remarks → display "No remarks" */}
-                    <td style={cellStyle}>{p.remarks || "No remarks"}</td>
+                    <td style={cellStyle}>
+                      {new Date(p.endDate).toLocaleDateString()}
+                    </td>
+
+                    <td style={cellStyle}>
+                      {p.remarks || "No remarks"}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -180,9 +187,9 @@ export default function Completed() {
   );
 }
 
-// ----------------------------------------------
-// Inline CSS Styles for Table Headers and Cells (UNCHANGED)
-// ----------------------------------------------
+/* ----------------------------------------------
+   Inline Styles (UNCHANGED)
+---------------------------------------------- */
 
 const headerStyle = {
   border: "1px solid #ccc",
@@ -190,12 +197,12 @@ const headerStyle = {
   textAlign: "left",
   backgroundColor: "#f0f0f0",
   opacity: 1,
-  color: "#333"
+  color: "#333",
 };
 
 const cellStyle = {
   border: "1px solid #ccc",
   padding: "10px",
   opacity: 1,
-  color: "#333"
+  color: "#333",
 };

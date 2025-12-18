@@ -1,126 +1,168 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { FaArrowLeft, FaUserCircle } from "react-icons/fa";
 
 export default function DepartmentStatus() {
   const navigate = useNavigate();
   const [deptStats, setDeptStats] = useState([]);
-  // State to track if the screen is mobile size (e.g., < 768px)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // Function to update isMobile state
   const handleResize = () => {
     setIsMobile(window.innerWidth < 768);
   };
 
   useEffect(() => {
-    // Add event listener for window resize
     window.addEventListener("resize", handleResize);
 
-    // Initial check for admin login
     const isAdmin = localStorage.getItem("isAdmin");
-    if (!isAdmin) navigate("/admin-login", { replace: true });
+    if (!isAdmin) {
+      navigate("/admin-login", { replace: true });
+      return;
+    }
 
-    // Project data calculation logic (remains unchanged)
-    const allProjects = JSON.parse(localStorage.getItem("projects")) || [];
-    const depts = {};
+    const fetchStats = async () => {
+      try {
+        const res = await axios.get(
+           "https://usn.digital/department/projects?all=true"
+        );
 
-    allProjects.forEach(p => {
-      if (!depts[p.department]) {
-        depts[p.department] = { completed: 0, pending: 0, total: 0 };
+        const allProjects = res.data.projects || [];
+        const depts = {};
+
+        allProjects.forEach((p) => {
+          if (!depts[p.department]) {
+            depts[p.department] = {
+              completed: 0,
+              pending: 0,
+              total: 0,
+            };
+          }
+
+          depts[p.department].total += 1;
+
+          if (p.progress === 100) {
+            depts[p.department].completed += 1;
+          } else {
+            depts[p.department].pending += 1;
+          }
+        });
+
+        const statsArray = Object.keys(depts).map((d) => ({
+          department: d,
+          ...depts[d],
+          percentCompleted: (
+            (depts[d].completed / depts[d].total) *
+            100
+          ).toFixed(1),
+        }));
+
+        setDeptStats(statsArray);
+      } catch (err) {
+        console.error("Failed to fetch department stats", err);
       }
+    };
 
-      depts[p.department].total += 1;
+    fetchStats();
 
-      if (p.progress === 100) {
-        depts[p.department].completed += 1;
-      } else {
-        depts[p.department].pending += 1;
-      }
-    });
-
-    const statsArray = Object.keys(depts).map(d => ({
-      department: d,
-      ...depts[d],
-      percentCompleted: ((depts[d].completed / depts[d].total) * 100).toFixed(1)
-    }));
-
-    setDeptStats(statsArray);
-
-    // Clean up the event listener
     return () => window.removeEventListener("resize", handleResize);
   }, [navigate]);
 
-  // Inline CSS styles used for the department status table (unchanged)
   const tableStyles = {
     table: { width: "100%", borderCollapse: "collapse", marginTop: "20px" },
-    th: { padding: "8px", borderBottom: "1px solid #ccc", textAlign: "left", opacity: 1, color: "#000" },
-    td: { padding: "8px", borderBottom: "1px solid #eee", opacity: 1, color: "#000" },
+    th: {
+      padding: "8px",
+      borderBottom: "1px solid #ccc",
+      textAlign: "left",
+      opacity: 1,
+      color: "#000",
+      fontWeight: "700",
+    },
+    td: {
+      padding: "8px",
+      borderBottom: "1px solid #eee",
+      opacity: 1,
+      color: "#000",
+    },
     completed: { color: "#4CAF50", fontWeight: "bold", opacity: 1 },
     pending: { color: "#FF9800", fontWeight: "bold", opacity: 1 },
-    header: { 
-        display: "flex", 
-        alignItems: "center", 
-        gap: "10px", 
-        cursor: "pointer", 
-        marginBottom: "20px", 
-        opacity: 1, 
-        color: "#fff" 
+    header: {
+      display: "flex",
+      alignItems: "center",
+      gap: "10px",
+      cursor: "pointer",
+      marginBottom: "20px",
+      opacity: 1,
+      color: "#fff",
     },
   };
 
-  // Conditional styles based on screen size
-  const containerStyle = { 
-    display: "flex", 
+  const containerStyle = {
+    display: "flex",
     minHeight: "100vh",
-    // Mobile: Stack content vertically
-    flexDirection: isMobile ? "column" : "row", 
+    flexDirection: isMobile ? "column" : "row",
   };
 
-  const sidebarStyle = { 
-    // Mobile: Full width, horizontal navigation
-    width: isMobile ? "100%" : "250px", 
-    background: "#1f1f1f", 
-    color: "#fff", 
+  const sidebarStyle = {
+    width: isMobile ? "100%" : "250px",
+    background: "#1f1f1f",
+    color: "#fff",
     padding: isMobile ? "15px 20px" : "20px",
     display: isMobile ? "flex" : "block",
     justifyContent: isMobile ? "space-between" : "normal",
     alignItems: isMobile ? "center" : "normal",
-    order: isMobile ? 1 : 0, // Push sidebar to the top or bottom on mobile 
+    order: isMobile ? 1 : 0,
   };
-  
-  const mainStyle = { 
-    flex: 1, 
-    // Mobile: Reduced padding
-    padding: isMobile ? "20px 15px" : "40px", 
+
+  const mainStyle = {
+    flex: 1,
+    padding: isMobile ? "20px 15px" : "40px",
     background: "#f5f5f5",
-    order: isMobile ? 0 : 1, // Main content above sidebar on mobile
+    order: isMobile ? 0 : 1,
   };
 
   return (
     <div style={containerStyle}>
-      {/* Sidebar Section */}
       <aside style={sidebarStyle}>
-        {/* Admin profile section (Hidden on mobile for space) */}
-        <div style={{ textAlign: "center", display: isMobile ? "none" : "block", opacity: 1 }}>
+        <div
+          style={{
+            textAlign: "center",
+            display: isMobile ? "none" : "block",
+            opacity: 1,
+          }}
+        >
           <FaUserCircle size={48} color="#fff" />
           <h3 style={{ opacity: 1 }}>Admin</h3>
         </div>
 
-        {/* Navigation back to dashboard */}
-        <div style={tableStyles.header} onClick={() => navigate("/admin-dashboard")}>
+        <div
+          style={tableStyles.header}
+          onClick={() => navigate("/admin-dashboard")}
+        >
           <FaArrowLeft /> Back to Dashboard
         </div>
       </aside>
 
-      {/* Main Content Area */}
       <main style={mainStyle}>
-        <h1 style={{ opacity: 1, fontSize: isMobile ? "24px" : "32px" }}>Department Status</h1>
+        <h1
+         style={{
+    opacity: 1,
+    color: "#000",
+    fontWeight: 700,
+    fontSize: isMobile ? "24px" : "32px",
+    marginBottom: "20px",
+  }}
+        >
+          Department Status
+        </h1>
 
-        {/* Department summary table */}
-        {/* On mobile, wrapping in a div for horizontal scrolling */}
         <div style={{ overflowX: isMobile ? "auto" : "visible" }}>
-          <table style={{...tableStyles.table, minWidth: isMobile ? "500px" : "100%"}}>
+          <table
+            style={{
+              ...tableStyles.table,
+              minWidth: isMobile ? "500px" : "100%",
+            }}
+          >
             <thead>
               <tr>
                 <th style={tableStyles.th}>Department</th>
@@ -132,13 +174,26 @@ export default function DepartmentStatus() {
             </thead>
 
             <tbody>
-              {/* Render dynamic department statistics */}
               {deptStats.map((d, idx) => (
                 <tr key={idx}>
                   <td style={tableStyles.td}>{d.department}</td>
                   <td style={tableStyles.td}>{d.total}</td>
-                  <td style={{ ...tableStyles.td, ...tableStyles.completed }}>{d.completed}</td>
-                  <td style={{ ...tableStyles.td, ...tableStyles.pending }}>{d.pending}</td>
+                  <td
+                    style={{
+                      ...tableStyles.td,
+                      ...tableStyles.completed,
+                    }}
+                  >
+                    {d.completed}
+                  </td>
+                  <td
+                    style={{
+                      ...tableStyles.td,
+                      ...tableStyles.pending,
+                    }}
+                  >
+                    {d.pending}
+                  </td>
                   <td style={tableStyles.td}>{d.percentCompleted}%</td>
                 </tr>
               ))}

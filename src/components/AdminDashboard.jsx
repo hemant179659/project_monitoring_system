@@ -1,58 +1,121 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
-  PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
 } from "recharts";
-import { FaTachometerAlt, FaList, FaSignOutAlt, FaUserCircle, FaChartBar } from "react-icons/fa";
+import {
+  FaTachometerAlt,
+  FaList,
+  FaSignOutAlt,
+  FaUserCircle,
+  FaChartBar,
+  FaImages,
+} from "react-icons/fa";
 import styles from "../styles/dashboard.module.css";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
 
   const [projects, setProjects] = useState([]);
   const [deptStats, setDeptStats] = useState([]);
-  const [totalCounts, setTotalCounts] = useState({ total: 0, completed: 0, pending: 0 });
+  const [animatedCounts, setAnimatedCounts] = useState({
+    total: 0,
+    completed: 0,
+    pending: 0,
+  });
+  const [loading, setLoading] = useState(true);
 
   const adminName = "Admin";
 
+  // -------------------------------
+  // 🔐 Admin Auth
+  // -------------------------------
   useEffect(() => {
     const isAdmin = localStorage.getItem("isAdmin");
-    if (!isAdmin) navigate("/admin-login", { replace: true });
+    if (!isAdmin) {
+      toast.warning("Please login first");
+      navigate("/admin-login", { replace: true });
+    }
   }, [navigate]);
 
+  // -------------------------------
+  // 📡 Fetch all projects
+  // -------------------------------
   useEffect(() => {
-    const allProjects = JSON.parse(localStorage.getItem("projects")) || [];
-    setProjects(allProjects);
+    const fetchAllProjects = async () => {
+      setLoading(true);
+      try {
+        const res = await axios.get(
+          "http://localhost:8000/department/projects?all=true"
+        );
 
-    const total = allProjects.length;
-    const completed = allProjects.filter(p => p.progress === 100).length;
-    const pending = total - completed;
+        if (res.data?.projects) {
+          const allProjects = res.data.projects;
+          setProjects(allProjects);
 
-    setTotalCounts({ total, completed, pending });
+          const total = allProjects.length;
+          const completed = allProjects.filter(
+            (p) => p.progress === 100
+          ).length;
+          const pending = total - completed;
 
-    const depts = {};
-    allProjects.forEach(p => {
-      if (!depts[p.department]) {
-        depts[p.department] = { completed: 0, pending: 0, total: 0 };
+          // Animate counters
+          let count = 0;
+          const interval = setInterval(() => {
+            setAnimatedCounts({
+              total: Math.min(count, total),
+              completed: Math.min(count, completed),
+              pending: Math.min(count, pending),
+            });
+            count++;
+            if (count > Math.max(total, completed, pending))
+              clearInterval(interval);
+          }, 50);
+
+          // Department stats
+          const depts = {};
+          allProjects.forEach((p) => {
+            if (!depts[p.department])
+              depts[p.department] = { completed: 0, pending: 0 };
+
+            if (p.progress === 100)
+              depts[p.department].completed += 1;
+            else depts[p.department].pending += 1;
+          });
+
+          const statsArray = Object.keys(depts).map((d) => ({
+            department: d,
+            ...depts[d],
+          }));
+
+          setDeptStats(statsArray);
+        }
+      } catch (err) {
+        console.error("Failed to fetch projects", err);
+      } finally {
+        setLoading(false);
       }
-      depts[p.department].total += 1;
+    };
 
-      if (p.progress === 100) {
-        depts[p.department].completed += 1;
-      } else {
-        depts[p.department].pending += 1;
-      }
-    });
-
-    const statsArray = Object.keys(depts).map(d => ({
-      department: d,
-      ...depts[d]
-    }));
-
-    setDeptStats(statsArray);
+    fetchAllProjects();
   }, []);
 
-  const COLORS = ["#4CAF50", "#FF9800", "#2196F3", "#FF5722", "#9C27B0", "#FFC107"];
+  const COLORS = [
+    "#4CAF50",
+    "#FF9800",
+    "#2196F3",
+    "#FF5722",
+    "#9C27B0",
+    "#FFC107",
+  ];
 
   const handleLogout = () => {
     localStorage.removeItem("isAdmin");
@@ -61,130 +124,171 @@ export default function AdminDashboard() {
 
   return (
     <div className={styles.container}>
-
       {/* Sidebar */}
       <aside className={styles.sidebar}>
         <div className={styles.profile}>
           <FaUserCircle size={48} color="#fff" />
-          <h3 style={{ opacity: 1 }}>{adminName}</h3>
+          <h3>{adminName}</h3>
         </div>
 
         <ul className={styles.menu}>
-          <li onClick={() => navigate("/admin-dashboard")}><FaTachometerAlt /> Dashboard</li>
-          <li onClick={() => navigate("/admin-project-list")}><FaList /> Project List</li>
-          <li onClick={() => navigate("/department-status")}><FaChartBar /> Department Status</li>
-          <li onClick={handleLogout}><FaSignOutAlt /> Logout</li>
+          <li onClick={() => navigate("/admin-dashboard")}>
+            <FaTachometerAlt /> Dashboard
+          </li>
+
+          <li onClick={() => navigate("/admin-project-list")}>
+            <FaList /> Project List
+          </li>
+
+          <li onClick={() => navigate("/department-status")}>
+            <FaChartBar /> Department Status
+          </li>
+
+          {/* ⭐ NEW TAB */}
+          <li onClick={() => navigate("/projectrecentphotoadmin")}>
+            <FaImages /> Project Recent Photos
+          </li>
+
+          <li onClick={handleLogout}>
+            <FaSignOutAlt /> Logout
+          </li>
         </ul>
       </aside>
 
-      {/* Main Content */}
       <main className={styles.main}>
-        <h1 style={{ opacity: 1 }}>Admin Dashboard</h1>
+        <h1>{adminName} Dashboard</h1>
 
-        {/* Summary Cards */}
-        <div className={styles.cards}>
-          <div className={styles.card} onClick={() => navigate("/admin-project-list")}>
-            <h3 style={{ opacity: 1 }}>Total Projects</h3>
-            <p style={{ opacity: 1 }}>{totalCounts.total}</p>
-          </div>
+        {!loading && (
+          <>
+            {/* Summary Cards */}
+            <div className={styles.cards}>
+              <div className={styles.card}>
+                <h3>Total Projects</h3>
+                <p>{animatedCounts.total}</p>
+              </div>
 
-          <div className={styles.card} onClick={() => navigate("/completed")}>
-            <h3 style={{ opacity: 1 }}>Completed</h3>
-            <p style={{ color: "#4CAF50", opacity: 1 }}>{totalCounts.completed}</p>
-          </div>
+              {/* ✅ CLICK → COMPLETED */}
+              <div
+                className={styles.card}
+                style={{ cursor: "pointer" }}
+                onClick={() => navigate("/completed")}
+              >
+                <h3>Completed</h3>
+                <p style={{ color: "#4CAF50" }}>
+                  {animatedCounts.completed}
+                </p>
+              </div>
 
-          <div className={styles.card} onClick={() => navigate("/pending")}>
-            <h3 style={{ opacity: 1 }}>Pending</h3>
-            <p style={{ color: "#FF9800", opacity: 1 }}>{totalCounts.pending}</p>
-          </div>
-        </div>
+              {/* ✅ CLICK → PENDING */}
+              <div
+                className={styles.card}
+                style={{ cursor: "pointer" }}
+                onClick={() => navigate("/Pending")}
+              >
+                <h3>Pending</h3>
+                <p style={{ color: "#FF9800" }}>
+                  {animatedCounts.pending}
+                </p>
+              </div>
+            </div>
 
-        {/* Pie Charts */}
-        <div style={{
-          maxWidth: "900px",
-          margin: "40px auto",
-          display: "flex",
-          gap: "50px",
-          flexWrap: "wrap",
-          alignItems: "flex-start",
-          opacity: 1
-        }}>
-
-          {/* Completed chart */}
-          <div style={{
-            flex: 1,
-            minWidth: "300px",
-            height: "420px"
-          }}>
-            <h3 style={{
-              textAlign: "center",
-              opacity: 1,
-              color: "#000",
-              minHeight: "50px"   // ⭐ FIX HERE
-            }}>
-              Completed Projects by Department
-            </h3>
-
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={deptStats}
-                  dataKey="completed"
-                  nameKey="department"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  label={{ fill: "#000", opacity: 1 }}
+            {/* Pie Charts */}
+            <div
+              style={{
+                maxWidth: "900px",
+                margin: "40px auto",
+                display: "flex",
+                gap: "50px",
+                flexWrap: "wrap",
+                alignItems: "flex-start",
+              }}
+            >
+              {/* Completed Pie */}
+              <div
+                style={{
+                  flex: 1,
+                  minWidth: "300px",
+                  height: "420px",
+                }}
+              >
+                <h3
+                  style={{
+                    textAlign: "center",
+                    color: "#000",
+                    minHeight: "50px",
+                  }}
                 >
-                  {deptStats.map((entry, index) => (
-                    <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
+                  Completed Projects by Department
+                </h3>
 
-                <Tooltip contentStyle={{ opacity: 1, color: "#000" }} itemStyle={{ opacity: 1 }} />
-                <Legend wrapperStyle={{ opacity: 1, color: "#000" }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={deptStats}
+                      dataKey="completed"
+                      nameKey="department"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      label={{ fill: "#000" }}
+                    >
+                      {deptStats.map((_, index) => (
+                        <Cell
+                          key={index}
+                          fill={COLORS[index % COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
 
-          {/* Pending chart */}
-          <div style={{
-            flex: 1,
-            minWidth: "300px",
-            height: "420px"
-          }}>
-            <h3 style={{
-              textAlign: "center",
-              opacity: 1,
-              color: "#000",
-              minHeight: "50px"   // ⭐ FIX HERE
-            }}>
-              Pending Projects by Department
-            </h3>
-
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={deptStats}
-                  dataKey="pending"
-                  nameKey="department"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  label={{ fill: "#000", opacity: 1 }}
+              {/* Pending Pie */}
+              <div
+                style={{
+                  flex: 1,
+                  minWidth: "300px",
+                  height: "420px",
+                }}
+              >
+                <h3
+                  style={{
+                    textAlign: "center",
+                    color: "#000",
+                    minHeight: "50px",
+                  }}
                 >
-                  {deptStats.map((entry, index) => (
-                    <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
+                  Pending Projects by Department
+                </h3>
 
-                <Tooltip contentStyle={{ opacity: 1, color: "#000" }} itemStyle={{ opacity: 1 }} />
-                <Legend wrapperStyle={{ opacity: 1, color: "#000" }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-
-        </div>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={deptStats}
+                      dataKey="pending"
+                      nameKey="department"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      label={{ fill: "#000" }}
+                    >
+                      {deptStats.map((_, index) => (
+                        <Cell
+                          key={index}
+                          fill={COLORS[index % COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </>
+        )}
       </main>
     </div>
   );
