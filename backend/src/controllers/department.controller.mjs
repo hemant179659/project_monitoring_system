@@ -117,7 +117,7 @@ export const forgotPassword = async (req, res) => {
     dept.resetTokenExpiry = expiry;
     await dept.save();
 
-    const resetLink = `https://usn.digital//dept-reset-password?token=${token}&email=${email}`;
+    const resetLink = `http://localhost:8000/dept-reset-password?token=${token}&email=${email}`;
 
     await transporter.sendMail({
       from: `"Project Monitoring" <${process.env.EMAIL_USER}>`,

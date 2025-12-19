@@ -8,12 +8,7 @@ dotenv.config();
 const app = express();
 
 app.use(cors({
-    origin: [
-      "https://usn.digital",
-      "https://www.usn.digital",
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
+   
   }));
 app.use(express.json());
 

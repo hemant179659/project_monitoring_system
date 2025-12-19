@@ -62,7 +62,7 @@ export default function DepartmentSignup() {
     }
 
     try {
-      const response = await axios.post("https://usn.digital/department/signup", {
+      const response = await axios.post("http://localhost:8000/department/signup", {
         deptName,
         email,
         password,

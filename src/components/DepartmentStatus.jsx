@@ -24,7 +24,7 @@ export default function DepartmentStatus() {
     const fetchStats = async () => {
       try {
         const res = await axios.get(
-           "https://usn.digital/department/projects?all=true"
+           "http://localhost:8000/department/projects?all=true"
         );
 
         const allProjects = res.data.projects || [];
