@@ -6,9 +6,9 @@ import departmentRoutes from "./src/routes/department.routes.mjs";
 
 dotenv.config();
 const app = express();
-
 app.use(cors({
-  origin: 'http://72.61.242.80:4173'
+  origin: 'http://72.61.242.80',
+  credentials: true
 }));
 app.use(express.json());
 
