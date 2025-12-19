@@ -8,8 +8,8 @@ dotenv.config();
 const app = express();
 
 app.use(cors({
-   
-  }));
+  origin: 'http://72.61.242.80:4173'
+}));
 app.use(express.json());
 
 // Required for multer + AWS S3
