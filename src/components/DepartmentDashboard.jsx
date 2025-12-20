@@ -78,7 +78,7 @@ export default function DepartmentDashboard() {
       setError("");
       try {
         const res = await axios.get(
-          `http://localhost:8000/department/projects?department=${deptName}`
+          `/api/department/projects?department=${deptName}`
         );
 
         if (res.data?.projects) {

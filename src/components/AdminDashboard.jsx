@@ -54,7 +54,7 @@ export default function AdminDashboard() {
       setLoading(true);
       try {
         const res = await axios.get(
-          "http://localhost:8000/department/projects?all=true"
+          "/api/department/projects?all=true"
         );
 
         if (res.data?.projects) {

@@ -33,7 +33,7 @@ export default function Completed() {
     const fetchCompletedProjects = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:8000/department/projects?all=true"
+          "/get/department/projects?all=true"
         );
 
         if (res.data?.projects) {

@@ -31,7 +31,7 @@ export default function DeptResetPassword() {
 
     setLoading(true);
     try {
-      const res = await axios.post("http://localhost:8000/department/reset-password", {
+      const res = await axios.post("/api/department/reset-password", {
         email,
         token,
         newPassword,

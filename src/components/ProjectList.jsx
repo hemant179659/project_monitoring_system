@@ -36,7 +36,7 @@ export default function ProjectList() {
     const loadProjects = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:8000/department/projects?department=${loggedDept}`
+          `/api/department/projects?department=${loggedDept}`
         );
         setProjects(res.data.projects || []);
       } catch (error) {
@@ -55,7 +55,7 @@ export default function ProjectList() {
     if (!window.confirm("Are you sure you want to delete this project?")) return;
 
     try {
-      await axios.delete(`http://localhost:8000/department/project/${id}`);
+      await axios.delete(`/api/department/project/${id}`);
       setProjects((prev) => prev.filter((p) => p._id !== id));
       toast.success("Project deleted successfully");
     } catch (err) {

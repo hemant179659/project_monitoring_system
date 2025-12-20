@@ -53,7 +53,7 @@ export default function AddProject() {
     }
 
     try {
-      await axios.post("http://localhost:8000/department/add-project", {
+      await axios.post("/api/department/add-project", {
         name,
         progress: progressValue,
         startDate,
