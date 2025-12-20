@@ -6,16 +6,20 @@ import departmentRoutes from "./src/routes/department.routes.mjs";
 
 dotenv.config();
 const app = express();
+
 app.use(cors({
-  origin: 'http://72.61.242.80',
+  origin: [
+    "https://usn.digital",
+    "https://www.usn.digital"
+  ],
   credentials: true
 }));
-app.use(express.json());
 
-// Required for multer + AWS S3
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/department", departmentRoutes);
+// ✅ MUST match nginx + frontend
+app.use("/api/department", departmentRoutes);
 
 // DB
 mongoose
