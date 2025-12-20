@@ -18,10 +18,10 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ MUST match nginx + frontend
+// API routes
 app.use("/api/department", departmentRoutes);
 
-// DB
+// DB connection
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))

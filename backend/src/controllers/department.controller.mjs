@@ -7,9 +7,7 @@ import nodemailer from "nodemailer";
 import crypto from "crypto";
 dotenv.config();
 
-// ---------------------------
-// AWS S3 CONFIG
-// ---------------------------
+// AWS S3
 const s3 = new S3Client({
   region: process.env.AWS_REGION,
   credentials: {
@@ -18,9 +16,29 @@ const s3 = new S3Client({
   },
 });
 
-// ---------------------------
-// EXTRACT KEY FROM URL
-// ---------------------------
+// Multer setup
+const storage = multer.memoryStorage();
+export const photoUploadMiddleware = multer({
+  storage,
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (!["image/jpeg", "image/jpg"].includes(file.mimetype)) {
+      return cb(new Error("Only JPG images allowed"));
+    }
+    cb(null, true);
+  },
+}).array("photos", 5);
+
+// Nodemailer
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+// Helper
 function extractKeyFromUrl(url) {
   try {
     return url.split(".amazonaws.com/")[1];
@@ -30,50 +48,34 @@ function extractKeyFromUrl(url) {
 }
 
 // ---------------------------
-// MULTER MEMORY STORAGE
-// ---------------------------
-const storage = multer.memoryStorage();
-export const photoUploadMiddleware = multer({
-  storage,
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
-  fileFilter: (req, file, cb) => {
-    if (!["image/jpeg", "image/jpg"].includes(file.mimetype)) {
-      return cb(new Error("Only JPG images allowed"));
-    }
-    cb(null, true);
-  },
-}).array("photos", 5);
-
-// ---------------------------
-// NODEMAILER CONFIG
-// ---------------------------
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
-// ---------------------------
 // DEPARTMENT SIGNUP
 // ---------------------------
 export const departmentSignup = async (req, res) => {
+  console.log("Signup body:", req.body);
   const { deptName, email, password } = req.body;
   try {
     if (!deptName || !email || !password)
-      return res.status(400).json({ message: "All fields are required" });
+      return res.status(400).json({ message: "All fields required" });
 
-    const existingDept = await Department.findOne({ email });
-    if (existingDept) return res.status(400).json({ message: "Email already registered" });
+    const existingDept = await Department.findOne({ $or: [{ deptName }, { email }] });
+    if (existingDept)
+      return res.status(400).json({ message: "Dept name or email already exists" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const newDept = new Department({ deptName, email, password: hashedPassword });
-    await newDept.save();
 
-    res.status(201).json({ message: "Signup successful" });
-  } catch (error) {
-    console.error("Signup error:", error);
+    try {
+      const savedDept = await newDept.save();
+      console.log("Signup saved:", savedDept);
+      res.status(201).json({ message: "Signup successful" });
+    } catch (err) {
+      if (err.code === 11000) {
+        return res.status(400).json({ message: "Duplicate key error" });
+      }
+      throw err;
+    }
+  } catch (err) {
+    console.error("Signup error:", err);
     res.status(500).json({ message: "Server error during signup" });
   }
 };
@@ -101,7 +103,7 @@ export const departmentLogin = async (req, res) => {
 };
 
 // ---------------------------
-// FORGOT PASSWORD - SEND RESET LINK
+// FORGOT PASSWORD
 // ---------------------------
 export const forgotPassword = async (req, res) => {
   const { email } = req.body;
@@ -111,7 +113,7 @@ export const forgotPassword = async (req, res) => {
 
     const token = crypto.randomBytes(20).toString("hex");
     const hashedToken = await bcrypt.hash(token, 10);
-    const expiry = Date.now() + 15 * 60 * 1000; // 15 minutes
+    const expiry = Date.now() + 15 * 60 * 1000;
 
     dept.resetToken = hashedToken;
     dept.resetTokenExpiry = expiry;
