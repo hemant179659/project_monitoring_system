@@ -16,20 +16,23 @@ export default function DepartmentSignup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [verificationCode, setVerificationCode] = useState(""); 
+  const [verificationCode, setVerificationCode] = useState("");
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
+  // Handle Responsive Layout
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Redirect if already logged in
   useEffect(() => {
     const loggedInDept = localStorage.getItem("loggedInDepartment");
     if (loggedInDept) navigate("/dept-dashboard", { replace: true });
   }, [navigate]);
 
+  // Handle Back Navigation
   useEffect(() => {
     const handlePopState = () => navigate("/dept-login");
     window.history.pushState(null, document.title, window.location.href);
@@ -37,12 +40,39 @@ export default function DepartmentSignup() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, [navigate]);
 
+  // RESTORED SIGNUP LOGIC
   const handleSignup = async () => {
+    // 1. Basic Validation
     if (!deptName || !email || !password || !confirmPassword || !verificationCode) {
       return toast.error("Please complete all fields");
     }
-    if (password !== confirmPassword) return toast.error("Passwords do not match");
-    // Logic for signup...
+
+    if (password !== confirmPassword) {
+      return toast.error("Passwords do not match");
+    }
+
+    try {
+      // 2. API Call to Backend
+      const response = await axios.post("/api/department/signup", {
+        deptName,
+        email,
+        password,
+        verificationCode,
+      });
+
+      // 3. Success Handling
+      toast.success(response.data.message || "Account created successfully!");
+      
+      // Delay navigation so user can see the success message
+      setTimeout(() => {
+        navigate("/dept-login");
+      }, 2000);
+
+    } catch (error) {
+      // 4. Error Handling
+      const errorMessage = error.response?.data?.message || "Signup failed. Please try again.";
+      toast.error(errorMessage);
+    }
   };
 
   return (
@@ -52,18 +82,18 @@ export default function DepartmentSignup() {
       width: '100%', 
       display: 'flex', 
       flexDirection: 'column', 
-      overflowX: 'hidden' // Prevents horizontal scrolling on mobile
+      overflowX: 'hidden' 
     }}>
       <ToastContainer position="top-right" autoClose={2000} />
 
       <div className={styles.loginPage} style={{ 
         flex: 1, 
         display: 'flex', 
-        flexDirection: isMobile ? 'column' : 'row', // Stacks vertically on mobile
+        flexDirection: isMobile ? 'column' : 'row',
         height: isMobile ? 'auto' : '100vh' 
       }}>
         
-        {/* LEFT SECTION - Image height adjusted for mobile */}
+        {/* LEFT SECTION */}
         <div
           className={styles.leftSection}
           style={{ 
@@ -76,7 +106,7 @@ export default function DepartmentSignup() {
             flexDirection: 'column',
             justifyContent: 'flex-start',
             paddingTop: '20px',
-            height: isMobile ? '200px' : 'calc(100vh - 50px)', // Shorter image on mobile
+            height: isMobile ? '200px' : 'calc(100vh - 50px)',
             width: isMobile ? '100%' : '50%',
             borderRight: isMobile ? 'none' : '1px solid #eee'
           }}
@@ -84,7 +114,7 @@ export default function DepartmentSignup() {
           <BackButton onClick={() => navigate("/dept-login")} />
         </div>
 
-        {/* RIGHT SECTION - Scrollable form */}
+        {/* RIGHT SECTION */}
         <div 
           className={styles.rightSection}
           style={{
@@ -96,7 +126,7 @@ export default function DepartmentSignup() {
             height: isMobile ? 'auto' : 'calc(100vh - 50px)',
             overflowY: isMobile ? 'visible' : 'auto',
             paddingTop: isMobile ? '20px' : '40px',
-            paddingBottom: isMobile ? '100px' : '120px', // Extra space so form clear's footer
+            paddingBottom: isMobile ? '100px' : '120px', 
             width: isMobile ? '100%' : '50%'
           }}
         >
@@ -105,27 +135,61 @@ export default function DepartmentSignup() {
               Department Signup
             </h2>
 
-            <select className={styles.inputField} value={deptName} onChange={(e) => setDeptName(e.target.value)}>
+            <select 
+              className={styles.inputField} 
+              value={deptName} 
+              onChange={(e) => setDeptName(e.target.value)}
+            >
               <option value="">Select Department</option>
               {["Agriculture", "PWD", "Forestry", "Horticulture", "Vetenary"].map((dept) => (
                 <option key={dept} value={dept}>{dept}</option>
               ))}
             </select>
 
-            <input className={styles.inputField} type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-            <input className={styles.inputField} type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-            <input className={styles.inputField} type="password" placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
-            <input className={styles.inputField} type="text" placeholder="Enter Verification Code" value={verificationCode} onChange={(e) => setVerificationCode(e.target.value)} />
+            <input 
+              className={styles.inputField} 
+              type="email" 
+              placeholder="Email" 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+            />
+            <input 
+              className={styles.inputField} 
+              type="password" 
+              placeholder="Password" 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+            />
+            <input 
+              className={styles.inputField} 
+              type="password" 
+              placeholder="Confirm Password" 
+              value={confirmPassword} 
+              onChange={(e) => setConfirmPassword(e.target.value)} 
+            />
+            <input 
+              className={styles.inputField} 
+              type="text" 
+              placeholder="Enter Verification Code" 
+              value={verificationCode} 
+              onChange={(e) => setVerificationCode(e.target.value)} 
+            />
 
             <button className={styles.loginBtn} onClick={handleSignup}>Signup</button>
-            <button className={styles.loginBtn} style={{ marginTop: '10px' }} onClick={() => navigate("/dept-login")}>Back to Login</button>
+            <button 
+              className={styles.loginBtn} 
+              style={{ marginTop: '10px', backgroundColor: '#6c757d' }} 
+              onClick={() => navigate("/dept-login")}
+            >
+              Back to Login
+            </button>
           </div>
         </div>
       </div>
 
-      {/* SLIM STICKY FOOTER */}
+      {/* FOOTER */}
       <footer style={{
-        position: isMobile ? 'relative' : 'fixed', // Fixed for desktop, normal flow for mobile
+        position: isMobile ? 'relative' : 'fixed',
         bottom: 0,
         left: 0,
         width: '100%',
