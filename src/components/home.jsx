@@ -18,14 +18,15 @@ export default function Home() {
   return (
     <div style={{
       position: 'relative',
-      minHeight: '100vh',
+      height: '100vh', // Changed to fixed height to ensure vertical centering
       width: '100%',
       display: 'flex',
       flexDirection: 'column',
-      alignItems: 'center',
+      justifyContent: 'center', // Centers main content vertically
+      alignItems: 'center', // Centers main content horizontally
       backgroundColor: '#001529',
       fontFamily: "'serif', 'Times New Roman', Times, serif",
-      overflowX: 'hidden'
+      overflow: 'hidden' // Prevents scroll since we are using 100vh
     }}>
       
       {/* Background Layer */}
@@ -46,25 +47,29 @@ export default function Home() {
         textAlign: 'center', 
         color: '#ffffff', 
         width: '90%',
-        paddingTop: isMobile ? '40px' : '80px',
-        paddingBottom: isMobile ? '160px' : '100px' // Added cushion so buttons don't hit the footer
+        maxWidth: '800px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center', // Ensures title/line/buttons stay centered
+        marginTop: '-50px' // Compensates for the footer height to look perfectly centered
       }}>
         <h1 style={{ 
-          fontSize: isSmallMobile ? '1.5rem' : isMobile ? '1.8rem' : '2.8rem', 
+          fontSize: isSmallMobile ? '1.5rem' : isMobile ? '1.8rem' : '3.2rem', 
           marginBottom: '10px', 
           fontWeight: 'bold',
           letterSpacing: '1px',
           textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-          lineHeight: '1.2'
+          lineHeight: '1.2',
+          textTransform: 'uppercase'
         }}>
-          PROJECT MONITORING DASHBOARD
+          Project Monitoring Dashboard
         </h1>
         
         <div style={{ 
             width: '80px', 
             height: '4px', 
             backgroundColor: '#ff9933', 
-            margin: '0 auto 30px auto' 
+            margin: '10px 0 40px 0' // Removed auto margin because parent is centered flex
         }}></div>
 
         <div style={{ 
@@ -72,7 +77,8 @@ export default function Home() {
           flexDirection: isMobile ? 'column' : 'row',
           gap: isMobile ? '15px' : '25px', 
           justifyContent: 'center',
-          alignItems: 'center'
+          alignItems: 'center',
+          width: '100%'
         }}>
           <Link to="/admin-login" style={govButtonStyle('#0056b3', isMobile)}>ADMIN LOGIN</Link>
           <Link to="/dept-login" style={govButtonStyle('#28a745', isMobile)}>DEPARTMENT LOGIN</Link>
@@ -87,7 +93,7 @@ export default function Home() {
         zIndex: 10,
         backgroundColor: '#f8f9fa',
         borderTop: '3px solid #0056b3',
-        padding: '8px 10px', // Greatly reduced padding
+        padding: '8px 10px',
         color: '#333',
         textAlign: 'center',
       }}>
@@ -118,18 +124,19 @@ export default function Home() {
 }
 
 const govButtonStyle = (bgColor, isMobile) => ({
-  padding: '12px 20px',
+  padding: '14px 24px',
   backgroundColor: bgColor,
   color: 'white',
   textDecoration: 'none',
-  borderRadius: '2px',
+  borderRadius: '4px',
   fontWeight: '600',
-  fontSize: '0.85rem',
+  fontSize: '0.9rem',
   textAlign: 'center',
-  width: isMobile ? '85%' : '210px',
+  width: isMobile ? '80%' : '240px',
   maxWidth: '300px',
   display: 'inline-block',
-  boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
+  boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
   border: '1px solid rgba(255,255,255,0.2)',
-  letterSpacing: '0.5px'
+  letterSpacing: '1px',
+  transition: 'transform 0.2s ease'
 });
