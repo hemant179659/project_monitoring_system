@@ -27,13 +27,17 @@ import "react-toastify/dist/ReactToastify.css";
 /* -------------------------------------------------
     Y-axis tick with REAL wrapping (no cut)
 ------------------------------------------------- */
-const WrappedYAxisTick = ({ x, y, payload }) => {
+const WrappedYAxisTick = ({ x, y, payload, isMobile }) => {
+  // On mobile, we give it less width but keep the wrapping logic
+  const width = isMobile ? 120 : 240;
+  const xOffset = isMobile ? 130 : 260;
+
   return (
-    <foreignObject x={x - 260} y={y - 28} width={240} height={56}>
+    <foreignObject x={x - xOffset} y={y - 28} width={width} height={56}>
       <div
         style={{
-          fontSize: "12px",
-          lineHeight: "1.3",
+          fontSize: isMobile ? "10px" : "12px",
+          lineHeight: "1.2",
           color: "#374151",
           textAlign: "right",
           whiteSpace: "normal",
@@ -64,7 +68,6 @@ export default function DepartmentDashboard() {
   const [error, setError] = useState("");
   const deptName = localStorage.getItem("loggedInDepartment");
 
-  // Handle Resize
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
@@ -137,36 +140,34 @@ export default function DepartmentDashboard() {
   if (!deptName) return null;
 
   return (
-    <div className={styles.container} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', flex: 1, flexDirection: isMobile ? 'column' : 'row' }}>
+    <div style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      minHeight: '100vh',
+      backgroundColor: '#f4f7f6' 
+    }}>
+      {/* WRAPPER FOR SIDEBAR + MAIN */}
+      <div style={{ 
+        display: 'flex', 
+        flex: 1, 
+        flexDirection: isMobile ? 'column' : 'row' 
+      }}>
         <aside className={styles.sidebar}>
           <div className={styles.profile}>
             <FaUserCircle size={48} color="#fff" />
             <h3>{deptName}</h3>
           </div>
           <ul className={styles.menu}>
-            <li onClick={() => navigate("/dept-dashboard")}>
-              <FaTachometerAlt /> Dashboard
-            </li>
-            <li onClick={() => navigate("/add-project")}>
-              <FaPlus /> Add Project
-            </li>
-            <li onClick={() => navigate("/project-list")}>
-              <FaList /> Project List
-            </li>
-            <li onClick={() => navigate("/daily-reporting")}>
-              <FaClipboardCheck /> Daily Reporting
-            </li>
-            <li onClick={() => navigate("/project-photos")}>
-              <FaList /> Projects Recent Photos
-            </li>
-            <li onClick={handleLogout}>
-              <FaSignOutAlt /> Logout
-            </li>
+            <li onClick={() => navigate("/dept-dashboard")}><FaTachometerAlt /> Dashboard</li>
+            <li onClick={() => navigate("/add-project")}><FaPlus /> Add Project</li>
+            <li onClick={() => navigate("/project-list")}><FaList /> Project List</li>
+            <li onClick={() => navigate("/daily-reporting")}><FaClipboardCheck /> Daily Reporting</li>
+            <li onClick={() => navigate("/project-photos")}><FaList /> Projects Recent Photos</li>
+            <li onClick={handleLogout}><FaSignOutAlt /> Logout</li>
           </ul>
         </aside>
 
-        <main className={styles.main} style={{ paddingBottom: isMobile ? '20px' : '80px' }}>
+        <main className={styles.main} style={{ flex: 1, padding: isMobile ? '15px' : '30px' }}>
           <h1>{deptName} Dashboard</h1>
 
           {!loading && !error && (
@@ -178,15 +179,11 @@ export default function DepartmentDashboard() {
                 </div>
                 <div className={styles.card}>
                   <h3>Completed</h3>
-                  <p style={{ color: "#4CAF50" }}>
-                    {animatedCounts.completed}
-                  </p>
+                  <p style={{ color: "#4CAF50" }}>{animatedCounts.completed}</p>
                 </div>
                 <div className={styles.card}>
                   <h3>Pending</h3>
-                  <p style={{ color: "#FF9800" }}>
-                    {animatedCounts.pending}
-                  </p>
+                  <p style={{ color: "#FF9800" }}>{animatedCounts.pending}</p>
                 </div>
               </div>
 
@@ -196,110 +193,51 @@ export default function DepartmentDashboard() {
                   maxWidth: "900px", 
                   margin: "40px auto", 
                   width: '100%',
-                  padding: isMobile ? '10px' : '20px',
-                  boxSizing: 'border-box'
+                  overflowX: 'hidden' 
                 }}
               >
-                <h2
-                  style={{
-                    fontWeight: 800,
-                    fontSize: isMobile ? "18px" : "22px",
-                    color: "#1f2937",
-                    letterSpacing: "0.6px",
-                    marginBottom: "16px",
-                    textShadow: "0 1px 1px rgba(0,0,0,0.15)",
-                  }}
-                >
+                <h2 style={{ fontWeight: 800, fontSize: isMobile ? "18px" : "22px", color: "#1f2937", marginBottom: "16px" }}>
                   Project Progress Overview
                 </h2>
 
-                <div style={{ width: "100%", height: isMobile ? 350 : 520 }}>
+                <div style={{ width: "100%", height: isMobile ? 400 : 520 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
-                      layout={isMobile ? "horizontal" : "vertical"}
+                      layout="vertical"
                       data={barData}
                       margin={{ 
-                        top: 20, 
-                        right: 20, 
-                        left: isMobile ? 0 : 80, 
-                        bottom: isMobile ? 60 : 30 
+                        top: 10, 
+                        right: 10, 
+                        left: isMobile ? -30 : 60, // Move left to give more room for names on mobile
+                        bottom: 10 
                       }}
                     >
                       <CartesianGrid strokeDasharray="3 3" />
-                      {isMobile ? (
-                        <>
-                          <XAxis 
-                            dataKey="name" 
-                            interval={0} 
-                            tick={{ fontSize: 10 }}
-                            angle={-45}
-                            textAnchor="end"
-                          />
-                          <YAxis type="number" domain={[0, 100]} />
-                        </>
-                      ) : (
-                        <>
-                          <XAxis type="number" domain={[0, 100]} />
-                          <YAxis
-                            type="category"
-                            dataKey="name"
-                            width={280}
-                            tick={<WrappedYAxisTick />}
-                          />
-                        </>
-                      )}
-                      <Tooltip />
-                      <Legend verticalAlign="top" height={36}/>
-                      <Bar dataKey="progress" barSize={isMobile ? 30 : 20}>
+                      <XAxis type="number" domain={[0, 100]} />
+                      <YAxis
+                        type="category"
+                        dataKey="name"
+                        width={isMobile ? 140 : 280} // Dynamic width for the label area
+                        tick={<WrappedYAxisTick isMobile={isMobile} />}
+                      />
+                      <Tooltip cursor={{fill: 'transparent'}} />
+                      <Bar dataKey="progress" barSize={20}>
                         {barData.map((entry, i) => (
-                          <Cell
-                            key={i}
-                            fill={getBarColor(entry.progress)}
-                          />
+                          <Cell key={i} fill={getBarColor(entry.progress)} />
                         ))}
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
 
-                {/* ✅ FULLY VISIBLE PROGRESS BAR TITLES */}
                 <div style={{ marginTop: "34px" }}>
                   {projects.map((p, idx) => (
                     <div key={idx} style={{ marginBottom: "22px" }}>
-                      <div
-                        style={{
-                          fontWeight: 700,
-                          fontSize: "14px",
-                          lineHeight: "1.5",
-                          whiteSpace: "normal",
-                          wordBreak: "break-word",
-                          width: "100%",
-                          marginBottom: "6px",
-                          color: "#111827",
-                        }}
-                      >
+                      <div style={{ fontWeight: 700, fontSize: "14px", marginBottom: "6px", color: "#111827" }}>
                         {p.name}
                       </div>
-
-                      <div
-                        style={{
-                          background: "#ddd",
-                          borderRadius: "8px",
-                          height: "16px",
-                          overflow: "hidden",
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: `${p.progress}%`,
-                            background:
-                              p.progress === 100
-                                ? "#4CAF50"
-                                : "#FF9800",
-                            height: "100%",
-                            transition: "width 0.6s ease",
-                          }}
-                        />
+                      <div style={{ background: "#ddd", borderRadius: "8px", height: "16px", overflow: "hidden" }}>
+                        <div style={{ width: `${p.progress}%`, background: p.progress === 100 ? "#4CAF50" : "#FF9800", height: "100%", transition: "width 0.6s ease" }} />
                       </div>
                     </div>
                   ))}
@@ -310,36 +248,32 @@ export default function DepartmentDashboard() {
         </main>
       </div>
 
-      {/* SLIM STICKY FOOTER */}
+      {/* FOOTER AT BOTTOM OF PAGE (Not sticky/floating) */}
       <footer style={{
-        position: isMobile ? 'relative' : 'fixed',
-        bottom: 0,
-        left: 0,
         width: '100%',
         backgroundColor: '#f8f9fa',
         borderTop: '3px solid #0056b3',
-        padding: '8px 10px',
+        padding: '12px 10px',
         color: '#333',
         textAlign: 'center',
-        zIndex: 1000,
         fontFamily: "serif",
-        boxShadow: '0 -2px 10px rgba(0,0,0,0.1)'
+        marginTop: 'auto' // Pushes to bottom if content is short
       }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <p style={{ margin: '0', fontSize: '0.8rem', fontWeight: 'bold', color: '#002147' }}>
+          <p style={{ margin: '0', fontSize: '0.85rem', fontWeight: 'bold', color: '#002147' }}>
             District Administration
           </p>
-          <p style={{ margin: '2px 0', fontSize: '0.65rem', opacity: 0.8 }}>
+          <p style={{ margin: '4px 0', fontSize: '0.7rem', opacity: 0.8 }}>
             Designed and Developed by <strong>District Administration</strong>
           </p>
           <div style={{ 
             display: 'flex', 
             justifyContent: 'center', 
-            gap: '8px',
-            fontSize: '0.6rem',
+            gap: '12px',
+            fontSize: '0.65rem',
             borderTop: '1px solid #ddd',
-            marginTop: '4px',
-            paddingTop: '4px'
+            marginTop: '8px',
+            paddingTop: '8px'
           }}>
             <span>&copy; {new Date().getFullYear()} All Rights Reserved.</span>
             <span>|</span>
