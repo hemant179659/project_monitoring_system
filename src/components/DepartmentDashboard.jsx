@@ -28,7 +28,6 @@ import "react-toastify/dist/ReactToastify.css";
     Y-axis tick with REAL wrapping (Mobile Optimized)
 ------------------------------------------------- */
 const WrappedYAxisTick = ({ x, y, payload, isMobile }) => {
-  // We widen the container on mobile to allow more characters per line
   const width = isMobile ? 150 : 240;
   const xOffset = isMobile ? 155 : 260; 
 
@@ -215,7 +214,7 @@ export default function DepartmentDashboard() {
                       margin={{ 
                         top: 10, 
                         right: 30, 
-                        left: isMobile ? 70 : 80, // Moved chart further right on mobile
+                        left: isMobile ? 70 : 80, 
                         bottom: 10 
                       }}
                     >
@@ -224,7 +223,7 @@ export default function DepartmentDashboard() {
                       <YAxis
                         type="category"
                         dataKey="name"
-                        width={isMobile ? 160 : 280} // Increased width for text wrapping
+                        width={isMobile ? 160 : 280} 
                         tick={<WrappedYAxisTick isMobile={isMobile} />}
                         interval={0}
                       />
@@ -238,11 +237,23 @@ export default function DepartmentDashboard() {
                   </ResponsiveContainer>
                 </div>
 
-                {/* VISIBLE PROGRESS BARS BELOW CHART */}
+                {/* ✅ PROGRESS BARS WITH WRAPPING TEXT FOR LONG NAMES */}
                 <div style={{ marginTop: "34px" }}>
                   {projects.map((p, idx) => (
-                    <div key={idx} style={{ marginBottom: "22px" }}>
-                      <div style={{ fontWeight: 700, fontSize: "14px", marginBottom: "6px", color: "#111827" }}>
+                    <div key={idx} style={{ marginBottom: "25px" }}>
+                      <div 
+                        style={{ 
+                          fontWeight: 700, 
+                          fontSize: isMobile ? "13px" : "14px",
+                          lineHeight: "1.4", 
+                          whiteSpace: "normal", 
+                          wordBreak: "break-word", 
+                          width: "100%",
+                          marginBottom: "8px", 
+                          color: "#111827",
+                          display: "block"
+                        }}
+                      >
                         {p.name}
                       </div>
                       <div style={{ background: "#ddd", borderRadius: "8px", height: "16px", overflow: "hidden" }}>
@@ -257,7 +268,7 @@ export default function DepartmentDashboard() {
         </main>
       </div>
 
-      {/* FOOTER - VISIBLE ONLY AT BOTTOM OF PAGE */}
+      {/* FOOTER - ONLY VISIBLE AT BOTTOM OF CONTENT */}
       <footer style={{
         width: '100%',
         backgroundColor: '#f8f9fa',
