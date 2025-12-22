@@ -30,16 +30,15 @@ export default function ProjectPhotoAdmin() {
   useEffect(() => {
     const loadAllProjects = async () => {
       try {
-        const res = await axios.get(
-          "/api/department/projects?all=true"
-        );
-
+        const res = await axios.get("/api/department/projects?all=true");
         const projects = res.data.projects || [];
 
-        // ✅ Group projects by department
+        // ✅ Group ONLY projects that HAVE photos
         const grouped = projects.reduce((acc, p) => {
-          if (!acc[p.department]) acc[p.department] = [];
-          acc[p.department].push(p);
+          if (p.photos && p.photos.length > 0) {
+            if (!acc[p.department]) acc[p.department] = [];
+            acc[p.department].push(p);
+          }
           return acc;
         }, {});
 
@@ -53,9 +52,7 @@ export default function ProjectPhotoAdmin() {
     loadAllProjects();
   }, []);
 
-  // -------------------------------
   // 🔍 Preview helpers
-  // -------------------------------
   const nextImage = () =>
     setPreview((p) => ({
       ...p,
@@ -70,150 +67,162 @@ export default function ProjectPhotoAdmin() {
       zoom: false,
     }));
 
-  const closePreview = () =>
-    setPreview({ images: [], index: 0, zoom: false });
+  const closePreview = () => setPreview({ images: [], index: 0, zoom: false });
 
   const currentImage = preview.images[preview.index];
 
   return (
-    <div
-      style={{
-        padding: "30px",
-        background: "#f4f6f9",
-        minHeight: "100vh",
-      }}
-    >
-      {/* Page Heading */}
-      <h1
-        style={{
-          fontSize: "30px",
-          fontWeight: 700,
-          marginBottom: "30px",
-          color: "#111",
-          opacity: 1,
-          textAlign: "center",
-        }}
-      >
-        📸 Department-wise Project Recent Photos
-      </h1>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: "#f4f6f9" }}>
+      
+      {/* Main Content Area */}
+      <main style={{ flex: 1, padding: "30px" }}>
+        <h1
+          style={{
+            fontSize: "28px",
+            fontWeight: 700,
+            marginBottom: "35px",
+            color: "#1a1a1a",
+            textAlign: "center",
+          }}
+        >
+          📸 Recent Project Gallery (Admin View)
+        </h1>
 
-      {Object.keys(deptProjects).length === 0 && (
-        <p style={{ textAlign: "center", color: "#444", opacity: 1 }}>
-          No project photos available.
-        </p>
-      )}
-
-      {/* -------------------------------
-          Department Loop
-      -------------------------------- */}
-      {Object.keys(deptProjects).map((dept, idx) => (
-        <div key={idx} style={{ marginBottom: "50px" }}>
-          {/* Department Title */}
-          <h2
-            style={{
-              fontSize: "24px",
-              fontWeight: 700,
-              marginBottom: "20px",
-              color: "#000",
-              opacity: 1,
-              borderLeft: "6px solid #4CAF50",
-              paddingLeft: "12px",
-            }}
-          >
-            {dept} Department
-          </h2>
-
-          {/* Projects */}
-          {deptProjects[dept].map((project) => (
-            <div
-              key={project._id}
-              style={{
-                background: "#fff",
-                padding: "20px",
-                borderRadius: "12px",
-                marginBottom: "25px",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-              }}
-            >
-              {/* Project Name */}
-              <h3
+        {Object.keys(deptProjects).length === 0 ? (
+          <div style={{ textAlign: "center", marginTop: "100px" }}>
+             <p style={{ color: "#777", fontSize: "18px" }}>No recent photos found in any department.</p>
+          </div>
+        ) : (
+          Object.keys(deptProjects).map((dept, idx) => (
+            <div key={idx} style={{ marginBottom: "50px" }}>
+              {/* Department Title */}
+              <h2
                 style={{
-                  fontSize: "20px",
+                  fontSize: "22px",
                   fontWeight: 700,
-                  marginBottom: "15px",
-                  color: "#222",
-                  opacity: 1,
+                  marginBottom: "20px",
+                  color: "#0056b3",
+                  borderLeft: "6px solid #0056b3",
+                  paddingLeft: "15px",
+                  backgroundColor: "#eef2f7",
+                  padding: "10px 15px",
+                  borderRadius: "0 8px 8px 0"
                 }}
               >
-                {project.name}
-              </h3>
+                🏢 {dept} Department
+              </h2>
 
-              {/* Photos */}
-              {project.photos?.length ? (
-                <div style={{ display: "flex", gap: "15px", flexWrap: "wrap" }}>
-                  {project.photos.map((photo, i) => (
-                    <div
-                      key={i}
-                      onClick={() =>
-                        setPreview({
-                          images: project.photos.map((p) => p.url),
-                          index: i,
-                          zoom: false,
-                        })
-                      }
-                      style={{
-                        width: "150px",
-                        height: "150px",
-                        cursor: "pointer",
-                        borderRadius: "10px",
-                        overflow: "hidden",
-                        border: "1px solid #ddd",
-                      }}
-                    >
-                      <img
-                        src={photo.url}
-                        alt=""
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
-                      />
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "25px" }}>
+                {deptProjects[dept].map((project) => (
+                  <div
+                    key={project._id}
+                    style={{
+                      background: "#fff",
+                      padding: "15px",
+                      borderRadius: "12px",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+                      border: "1px solid #eee"
+                    }}
+                  >
+                    <h3 style={{ fontSize: "17px", fontWeight: 700, marginBottom: "12px", color: "#333", borderBottom: "1px solid #f0f0f0", paddingBottom: "8px" }}>
+                      {project.name}
+                    </h3>
+
+                    <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                      {project.photos.map((photo, i) => (
+                        <div
+                          key={i}
+                          onClick={() =>
+                            setPreview({
+                              images: project.photos.map((p) => p.url),
+                              index: i,
+                              zoom: false,
+                            })
+                          }
+                          style={{
+                            width: "80px",
+                            height: "80px",
+                            cursor: "pointer",
+                            borderRadius: "8px",
+                            overflow: "hidden",
+                            transition: "transform 0.2s"
+                          }}
+                          onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.05)"}
+                          onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
+                        >
+                          <img
+                            src={photo.url}
+                            alt="project"
+                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                          />
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <p style={{ color: "#555", opacity: 1 }}>
-                  No photos uploaded yet.
-                </p>
-              )}
+                    <p style={{ fontSize: "12px", color: "#999", marginTop: "10px" }}>
+                      {project.photos.length} Photo(s) uploaded
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
-          ))}
-        </div>
-      ))}
+          ))
+        )}
+      </main>
 
-      {/* -------------------------------
-          🔍 Image Preview Modal
-      -------------------------------- */}
+      {/* FOOTER */}
+      <footer style={{
+        width: '100%',
+        backgroundColor: '#f8f9fa',
+        borderTop: '3px solid #0056b3',
+        padding: '15px 10px',
+        color: '#333',
+        textAlign: 'center',
+        fontFamily: "serif",
+        marginTop: 'auto'
+      }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+          <p style={{ margin: '0', fontSize: '0.9rem', fontWeight: 'bold', color: '#002147' }}>
+            District Administration
+          </p>
+          <p style={{ margin: '4px 0', fontSize: '0.75rem', opacity: 0.8 }}>
+            Designed and Developed by <strong>District Administration</strong>
+          </p>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            gap: '12px',
+            fontSize: '0.7rem',
+            borderTop: '1px solid #ddd',
+            marginTop: '10px',
+            paddingTop: '10px'
+          }}>
+            <span>&copy; {new Date().getFullYear()} All Rights Reserved.</span>
+            <span>|</span>
+            <span>Official Digital Portal</span>
+          </div>
+        </div>
+      </footer>
+
+      {/* 🔍 Image Preview Modal */}
       {preview.images.length > 0 && (
         <div
           onClick={closePreview}
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0,0,0,0.85)",
+            background: "rgba(0,0,0,0.9)",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            zIndex: 999,
+            zIndex: 1000,
           }}
         >
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
               position: "relative",
-              maxWidth: "90%",
-              maxHeight: "90%",
+              maxWidth: "95%",
+              maxHeight: "95%",
               textAlign: "center",
             }}
           >
@@ -223,53 +232,37 @@ export default function ProjectPhotoAdmin() {
               style={{
                 maxWidth: "100%",
                 maxHeight: "80vh",
-                borderRadius: "10px",
+                borderRadius: "4px",
                 transform: preview.zoom ? "scale(1.5)" : "scale(1)",
                 transition: "transform 0.3s",
                 cursor: preview.zoom ? "zoom-out" : "zoom-in",
+                boxShadow: "0 0 20px rgba(0,0,0,0.5)"
               }}
-              onClick={() =>
-                setPreview((p) => ({ ...p, zoom: !p.zoom }))
-              }
+              onClick={() => setPreview((p) => ({ ...p, zoom: !p.zoom }))}
             />
 
-            <div
-              style={{
-                marginTop: "15px",
-                display: "flex",
-                justifyContent: "center",
-                gap: "15px",
-              }}
-            >
-              <button onClick={prevImage} style={controlBtn}>◀</button>
-              <a
-                href={currentImage}
-                download
-                style={{ ...controlBtn, textDecoration: "none" }}
-              >
-                ⬇
-              </a>
-              <button onClick={nextImage} style={controlBtn}>▶</button>
+            <div style={{ marginTop: "20px", display: "flex", justifyContent: "center", gap: "20px" }}>
+              <button onClick={prevImage} style={controlBtn}>PREV</button>
+              <a href={currentImage} download style={{ ...controlBtn, textDecoration: "none", background: "#0056b3" }}>DOWNLOAD</a>
+              <button onClick={nextImage} style={controlBtn}>NEXT</button>
             </div>
 
             <button
               onClick={closePreview}
               style={{
                 position: "absolute",
-                top: "-12px",
-                right: "-12px",
-                background: "#ff4d4f",
+                top: "-40px",
+                right: "0px",
+                background: "transparent",
                 color: "#fff",
-                border: "none",
-                borderRadius: "50%",
-                width: "32px",
-                height: "32px",
+                border: "1px solid #fff",
+                borderRadius: "4px",
+                padding: "5px 10px",
                 cursor: "pointer",
-                fontSize: "18px",
-                fontWeight: "bold",
+                fontSize: "14px",
               }}
             >
-              ×
+              CLOSE [X]
             </button>
           </div>
         </div>
@@ -278,16 +271,14 @@ export default function ProjectPhotoAdmin() {
   );
 }
 
-/* -------------------------------
-   Button style
--------------------------------- */
 const controlBtn = {
-  padding: "8px 14px",
-  fontSize: "16px",
-  borderRadius: "6px",
+  padding: "10px 20px",
+  fontSize: "14px",
+  borderRadius: "4px",
   border: "none",
   cursor: "pointer",
-  background: "#4CAF50",
+  background: "#444",
   color: "#fff",
   fontWeight: 600,
+  letterSpacing: "1px"
 };
