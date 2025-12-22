@@ -25,15 +25,21 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 /* -------------------------------------------------
-    Y-axis tick with REAL wrapping (no cut)
+    Y-axis tick with REAL wrapping (Mobile Optimized)
 ------------------------------------------------- */
 const WrappedYAxisTick = ({ x, y, payload, isMobile }) => {
-  // On mobile, we give it less width but keep the wrapping logic
-  const width = isMobile ? 120 : 240;
-  const xOffset = isMobile ? 130 : 260;
+  // We widen the container on mobile to allow more characters per line
+  const width = isMobile ? 150 : 240;
+  const xOffset = isMobile ? 155 : 260; 
 
   return (
-    <foreignObject x={x - xOffset} y={y - 28} width={width} height={56}>
+    <foreignObject 
+      x={x - xOffset} 
+      y={y - 25} 
+      width={width} 
+      height={60}
+      style={{ overflow: 'visible' }}
+    >
       <div
         style={{
           fontSize: isMobile ? "10px" : "12px",
@@ -46,7 +52,7 @@ const WrappedYAxisTick = ({ x, y, payload, isMobile }) => {
           alignItems: "center",
           justifyContent: "flex-end",
           height: "100%",
-          paddingRight: "6px",
+          paddingRight: "10px",
         }}
       >
         {payload.value}
@@ -68,6 +74,7 @@ export default function DepartmentDashboard() {
   const [error, setError] = useState("");
   const deptName = localStorage.getItem("loggedInDepartment");
 
+  // Handle Window Resize
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
@@ -200,15 +207,15 @@ export default function DepartmentDashboard() {
                   Project Progress Overview
                 </h2>
 
-                <div style={{ width: "100%", height: isMobile ? 400 : 520 }}>
+                <div style={{ width: "100%", height: isMobile ? 450 : 520 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       layout="vertical"
                       data={barData}
                       margin={{ 
                         top: 10, 
-                        right: 10, 
-                        left: isMobile ? -30 : 60, // Move left to give more room for names on mobile
+                        right: 30, 
+                        left: isMobile ? 70 : 80, // Moved chart further right on mobile
                         bottom: 10 
                       }}
                     >
@@ -217,8 +224,9 @@ export default function DepartmentDashboard() {
                       <YAxis
                         type="category"
                         dataKey="name"
-                        width={isMobile ? 140 : 280} // Dynamic width for the label area
+                        width={isMobile ? 160 : 280} // Increased width for text wrapping
                         tick={<WrappedYAxisTick isMobile={isMobile} />}
+                        interval={0}
                       />
                       <Tooltip cursor={{fill: 'transparent'}} />
                       <Bar dataKey="progress" barSize={20}>
@@ -230,6 +238,7 @@ export default function DepartmentDashboard() {
                   </ResponsiveContainer>
                 </div>
 
+                {/* VISIBLE PROGRESS BARS BELOW CHART */}
                 <div style={{ marginTop: "34px" }}>
                   {projects.map((p, idx) => (
                     <div key={idx} style={{ marginBottom: "22px" }}>
@@ -248,7 +257,7 @@ export default function DepartmentDashboard() {
         </main>
       </div>
 
-      {/* FOOTER AT BOTTOM OF PAGE (Not sticky/floating) */}
+      {/* FOOTER - VISIBLE ONLY AT BOTTOM OF PAGE */}
       <footer style={{
         width: '100%',
         backgroundColor: '#f8f9fa',
@@ -257,7 +266,7 @@ export default function DepartmentDashboard() {
         color: '#333',
         textAlign: 'center',
         fontFamily: "serif",
-        marginTop: 'auto' // Pushes to bottom if content is short
+        marginTop: 'auto'
       }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <p style={{ margin: '0', fontSize: '0.85rem', fontWeight: 'bold', color: '#002147' }}>
