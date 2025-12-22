@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import styles from "../styles/dashboard.module.css";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -15,27 +14,35 @@ export default function ProjectRecentPhoto() {
 
   const loggedDept = localStorage.getItem("loggedInDepartment");
 
+  // -------------------------------
+  // 📱 Mobile Responsiveness Listener
+  // -------------------------------
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // -------------------------------
+  // 🔐 Auth Protection
+  // -------------------------------
   useEffect(() => {
     if (!loggedDept) {
       toast.error("Please login first");
       window.location.replace("/dept-login");
-      return;
     }
   }, [loggedDept]);
 
+  // -------------------------------
+  // 📡 Fetch Data (Filtered for Photos)
+  // -------------------------------
   useEffect(() => {
     const loadProjects = async () => {
       try {
         const res = await axios.get(
           `/api/department/projects?department=${loggedDept}`
         );
-        // ✅ Filter: Only keep projects that have at least one photo
+        // ✅ Only keep projects that have photos to avoid empty cards
         const filtered = (res.data.projects || []).filter(
           (p) => p.photos && p.photos.length > 0
         );
@@ -48,6 +55,9 @@ export default function ProjectRecentPhoto() {
     if (loggedDept) loadProjects();
   }, [loggedDept]);
 
+  // -------------------------------
+  // 🔍 Image Preview Helpers
+  // -------------------------------
   const nextImage = () =>
     setPreview((p) => ({
       ...p,
@@ -73,18 +83,19 @@ export default function ProjectRecentPhoto() {
       <main style={{ flex: 1, padding: isMobile ? "15px" : "30px" }}>
         <h1
           style={{
-            fontSize: isMobile ? "20px" : "28px",
+            fontSize: isMobile ? "22px" : "28px",
             fontWeight: 700,
             marginBottom: "25px",
             color: "#111",
+            textAlign: isMobile ? "center" : "left"
           }}
         >
-          📸 Recent Photos – {loggedDept}
+          📸 Recent Photos – <span style={{ color: "#0056b3" }}>{loggedDept}</span>
         </h1>
 
         {projects.length === 0 ? (
-          <div style={{ textAlign: 'center', marginTop: '50px', color: '#666' }}>
-            <p>No projects with photos found for this department.</p>
+          <div style={{ textAlign: 'center', marginTop: '80px', color: '#666' }}>
+            <p style={{ fontSize: "1.1rem" }}>No projects with photos found for your department.</p>
           </div>
         ) : (
           projects.map((project) => (
@@ -92,30 +103,40 @@ export default function ProjectRecentPhoto() {
               key={project._id}
               style={{
                 background: "#fff",
-                padding: isMobile ? "15px" : "20px",
+                padding: isMobile ? "15px" : "25px",
                 borderRadius: "12px",
                 marginBottom: "25px",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                boxShadow: "0 4px 15px rgba(0,0,0,0.05)",
+                border: "1px solid #eee",
+                overflow: "hidden" // Prevents child elements from bleeding out
               }}
             >
+              {/* --- 🛠 HANDLED LONG PROJECT NAME --- */}
               <h2
+                title={project.name} // Full name on hover
                 style={{
-                  fontSize: isMobile ? "17px" : "22px",
+                  fontSize: isMobile ? "18px" : "22px",
                   fontWeight: 700,
-                  marginBottom: "15px",
+                  marginBottom: "20px",
                   color: "#222",
-                  borderLeft: "4px solid #4CAF50",
-                  paddingLeft: "10px"
+                  borderLeft: "5px solid #4CAF50",
+                  paddingLeft: "15px",
+                  lineHeight: "1.4",
+                  wordBreak: "break-word",
+                  overflowWrap: "anywhere",
+                  display: "-webkit-box",
+                  WebkitLineClamp: "2", // Limits to 2 lines then adds "..."
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden"
                 }}
               >
                 {project.name}
               </h2>
 
-              {/* Photos Grid: Responsive for Mobile */}
               <div style={{ 
                 display: "grid", 
-                gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, 180px)", 
-                gap: isMobile ? "10px" : "15px" 
+                gridTemplateColumns: isMobile ? "repeat(auto-fill, minmax(100px, 1fr))" : "repeat(auto-fill, 180px)", 
+                gap: isMobile ? "10px" : "18px" 
               }}>
                 {project.photos.map((photo, i) => (
                   <div
@@ -132,13 +153,16 @@ export default function ProjectRecentPhoto() {
                       cursor: "pointer",
                       borderRadius: "8px",
                       overflow: "hidden",
-                      border: "1px solid #eee",
-                      backgroundColor: "#fafafa"
+                      border: "2px solid #f0f0f0",
+                      transition: "transform 0.2s ease",
                     }}
+                    onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.02)"}
+                    onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
                   >
                     <img
                       src={photo.url}
                       alt="Project detail"
+                      loading="lazy"
                       style={{
                         width: "100%",
                         height: "100%",
@@ -148,25 +172,26 @@ export default function ProjectRecentPhoto() {
                   </div>
                 ))}
               </div>
+              <p style={{ marginTop: "15px", fontSize: "12px", color: "#888", textAlign: "right" }}>
+                Total Photos: {project.photos.length}
+              </p>
             </div>
           ))
         )}
       </main>
 
-      {/* -------------------------------
-          Image Preview Modal (Mobile Optimized)
-      -------------------------------- */}
+      {/* 🔍 Image Preview Modal */}
       {preview.images.length > 0 && (
         <div
           onClick={closePreview}
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0,0,0,0.95)",
+            background: "rgba(0,0,0,0.9)",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            zIndex: 1000,
+            zIndex: 2000,
             padding: "10px"
           }}
         >
@@ -175,7 +200,7 @@ export default function ProjectRecentPhoto() {
             style={{
               position: "relative",
               width: "100%",
-              maxWidth: "900px",
+              maxWidth: "1000px",
               textAlign: "center",
             }}
           >
@@ -184,28 +209,28 @@ export default function ProjectRecentPhoto() {
               alt="preview"
               style={{
                 maxWidth: "100%",
-                maxHeight: isMobile ? "70vh" : "80vh",
+                maxHeight: isMobile ? "65vh" : "80vh",
                 borderRadius: "4px",
                 transform: preview.zoom ? "scale(1.5)" : "scale(1)",
                 transition: "transform 0.3s ease",
                 cursor: preview.zoom ? "zoom-out" : "zoom-in",
-                objectFit: "contain"
+                boxShadow: "0 5px 25px rgba(0,0,0,0.5)"
               }}
               onClick={() => setPreview((p) => ({ ...p, zoom: !p.zoom }))}
             />
 
-            <div style={{ marginTop: "20px", display: "flex", justifyContent: "center", gap: "25px" }}>
-              <button onClick={prevImage} style={controlBtn}>◀</button>
-              <a href={currentImage} download style={{ ...controlBtn, textDecoration: "none" }}>⬇</a>
-              <button onClick={nextImage} style={controlBtn}>▶</button>
+            <div style={{ marginTop: "25px", display: "flex", justifyContent: "center", gap: "20px" }}>
+              <button onClick={prevImage} style={controlBtn}>PREV</button>
+              <a href={currentImage} download style={{ ...controlBtn, textDecoration: "none", background: "#0056b3" }}>DOWNLOAD</a>
+              <button onClick={nextImage} style={controlBtn}>NEXT</button>
             </div>
 
             <button
               onClick={closePreview}
               style={{
                 position: "absolute",
-                top: isMobile ? "-50px" : "-20px",
-                right: isMobile ? "5px" : "-20px",
+                top: isMobile ? "-60px" : "-30px",
+                right: "0",
                 background: "#ff4d4f",
                 color: "#fff",
                 border: "none",
@@ -213,12 +238,12 @@ export default function ProjectRecentPhoto() {
                 width: "40px",
                 height: "40px",
                 cursor: "pointer",
-                fontSize: "24px",
+                fontSize: "20px",
                 fontWeight: "bold",
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
-                boxShadow: "0 2px 10px rgba(0,0,0,0.5)"
+                boxShadow: "0 2px 10px rgba(0,0,0,0.3)"
               }}
             >
               ×
@@ -227,36 +252,36 @@ export default function ProjectRecentPhoto() {
         </div>
       )}
 
-      {/* FOOTER */}
+      {/* 🏛 FOOTER */}
       <footer style={{
         width: '100%',
         backgroundColor: '#f8f9fa',
         borderTop: '3px solid #0056b3',
-        padding: '15px 10px',
+        padding: '20px 10px',
         color: '#333',
         textAlign: 'center',
         fontFamily: "serif",
         marginTop: 'auto'
       }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <p style={{ margin: '0', fontSize: '0.9rem', fontWeight: 'bold', color: '#002147' }}>
+          <p style={{ margin: '0', fontSize: '0.95rem', fontWeight: 'bold', color: '#002147' }}>
             District Administration
           </p>
-          <p style={{ margin: '4px 0', fontSize: '0.75rem', opacity: 0.8 }}>
+          <p style={{ margin: '5px 0', fontSize: '0.8rem', opacity: 0.8 }}>
             Designed and Developed by <strong>District Administration</strong>
           </p>
           <div style={{ 
             display: 'flex', 
             justifyContent: 'center', 
-            gap: '12px',
-            fontSize: '0.7rem',
+            gap: '15px',
+            fontSize: '0.75rem',
             borderTop: '1px solid #ddd',
-            marginTop: '10px',
-            paddingTop: '10px'
+            marginTop: '12px',
+            paddingTop: '12px'
           }}>
             <span>&copy; {new Date().getFullYear()} All Rights Reserved.</span>
             <span>|</span>
-            <span>Official Digital Portal</span>
+            <span>Official Departmental Portal</span>
           </div>
         </div>
       </footer>
@@ -265,16 +290,15 @@ export default function ProjectRecentPhoto() {
 }
 
 const controlBtn = {
-  padding: "12px 20px",
-  fontSize: "20px",
-  borderRadius: "8px",
+  padding: "10px 18px",
+  fontSize: "14px",
+  borderRadius: "6px",
   border: "none",
   cursor: "pointer",
   background: "#4CAF50",
   color: "#fff",
   fontWeight: 600,
-  boxShadow: "0 2px 5px rgba(0,0,0,0.3)",
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center'
+  letterSpacing: "0.5px",
+  boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+  transition: "background 0.2s ease"
 };

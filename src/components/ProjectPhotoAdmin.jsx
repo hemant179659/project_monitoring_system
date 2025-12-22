@@ -33,7 +33,6 @@ export default function ProjectPhotoAdmin() {
         const res = await axios.get("/api/department/projects?all=true");
         const projects = res.data.projects || [];
 
-        // ✅ Group ONLY projects that HAVE photos
         const grouped = projects.reduce((acc, p) => {
           if (p.photos && p.photos.length > 0) {
             if (!acc[p.department]) acc[p.department] = [];
@@ -74,7 +73,6 @@ export default function ProjectPhotoAdmin() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: "#f4f6f9" }}>
       
-      {/* Main Content Area */}
       <main style={{ flex: 1, padding: "30px" }}>
         <h1
           style={{
@@ -95,7 +93,6 @@ export default function ProjectPhotoAdmin() {
         ) : (
           Object.keys(deptProjects).map((dept, idx) => (
             <div key={idx} style={{ marginBottom: "50px" }}>
-              {/* Department Title */}
               <h2
                 style={{
                   fontSize: "22px",
@@ -121,14 +118,36 @@ export default function ProjectPhotoAdmin() {
                       padding: "15px",
                       borderRadius: "12px",
                       boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
-                      border: "1px solid #eee"
+                      border: "1px solid #eee",
+                      display: 'flex',
+                      flexDirection: 'column'
                     }}
                   >
-                    <h3 style={{ fontSize: "17px", fontWeight: 700, marginBottom: "12px", color: "#333", borderBottom: "1px solid #f0f0f0", paddingBottom: "8px" }}>
+                    {/* --- 🛠 HANDLED LONG PROJECT NAME HERE --- */}
+                    <h3 
+                      title={project.name} // Shows full text on mouse hover
+                      style={{ 
+                        fontSize: "17px", 
+                        fontWeight: 700, 
+                        marginBottom: "12px", 
+                        color: "#333", 
+                        borderBottom: "1px solid #f0f0f0", 
+                        paddingBottom: "8px",
+                        lineHeight: "1.4",
+                        minHeight: "3em", // Keeps cards aligned even with short titles
+                        /* Line Clamping Logic */
+                        display: "-webkit-box",
+                        WebkitLineClamp: "2",
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        wordBreak: "break-word"
+                      }}
+                    >
                       {project.name}
                     </h3>
 
-                    <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", flex: 1 }}>
                       {project.photos.map((photo, i) => (
                         <div
                           key={i}
@@ -145,7 +164,8 @@ export default function ProjectPhotoAdmin() {
                             cursor: "pointer",
                             borderRadius: "8px",
                             overflow: "hidden",
-                            transition: "transform 0.2s"
+                            transition: "transform 0.2s",
+                            border: "1px solid #eee"
                           }}
                           onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.05)"}
                           onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
@@ -159,7 +179,7 @@ export default function ProjectPhotoAdmin() {
                       ))}
                     </div>
                     <p style={{ fontSize: "12px", color: "#999", marginTop: "10px" }}>
-                      {project.photos.length} Photo(s) uploaded
+                      {project.photos.length} Photo(s)
                     </p>
                   </div>
                 ))}
