@@ -9,7 +9,7 @@ export default function ProjectList() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const loggedDept = localStorage.getItem("loggedInDepartment");
 
-  // Handle Resize for Footer/Layout
+  // Handle Resize for layout
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
@@ -78,7 +78,7 @@ export default function ProjectList() {
       <main style={{ flex: 1, padding: isMobile ? "15px" : "30px" }}>
         <div className={styles.projectWrapper}>
           <div className={styles.headerSection}>
-            <h1 style={{ color: "#000", fontWeight: 700, opacity: 1, marginBottom: "20px" }}>
+            <h1 style={{ color: "#333", fontWeight: 700, marginBottom: "20px" }}>
               📋 {loggedDept} Project List
             </h1>
           </div>
@@ -91,7 +91,7 @@ export default function ProjectList() {
               boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
           }}>
             {projects.length === 0 && (
-              <p style={{ color: "#000", opacity: 1 }}>No projects found.</p>
+              <p style={{ color: "#666" }}>No projects found.</p>
             )}
 
             <table
@@ -99,54 +99,54 @@ export default function ProjectList() {
               style={{
                 width: "100%",
                 borderCollapse: "collapse",
-                minWidth: "1200px", // Maintains structure on mobile
+                minWidth: "1200px", 
               }}
             >
               <thead>
                 <tr style={{ borderBottom: '2px solid #eee' }}>
-                  <th style={{ color: "#000", fontWeight: 700, textAlign: 'left', padding: '12px' }}>Project Name</th>
-                  <th style={{ color: "#000", fontWeight: 700, textAlign: 'left', padding: '12px' }}>Progress</th>
-                  <th style={{ color: "#000", fontWeight: 700, textAlign: 'left', padding: '12px' }}>Start Date</th>
-                  <th style={{ color: "#000", fontWeight: 700, textAlign: 'left', padding: '12px' }}>End Date</th>
-                  <th style={{ color: "#000", fontWeight: 700, textAlign: 'left', padding: '12px' }}>Contact Person</th>
-                  <th style={{ color: "#000", fontWeight: 700, textAlign: 'left', padding: '12px' }}>Designation</th>
-                  <th style={{ color: "#000", fontWeight: 700, textAlign: 'left', padding: '12px' }}>Contact Number</th>
-                  <th style={{ color: "#000", fontWeight: 700, textAlign: 'left', padding: '12px' }}>Budget</th>
-                  <th style={{ color: "#000", fontWeight: 700, textAlign: 'left', padding: '12px' }}>Remaining</th>
-                  <th style={{ color: "#000", fontWeight: 700, textAlign: 'left', padding: '12px' }}>Remarks</th>
-                  <th style={{ color: "#000", fontWeight: 700, textAlign: 'left', padding: '12px' }}>Action</th>
+                  <th style={thStyle}>Project Name</th>
+                  <th style={thStyle}>Progress</th>
+                  <th style={thStyle}>Start Date</th>
+                  <th style={thStyle}>End Date</th>
+                  <th style={thStyle}>Contact Person</th>
+                  <th style={thStyle}>Designation</th>
+                  <th style={thStyle}>Contact Number</th>
+                  <th style={thStyle}>Budget</th>
+                  <th style={thStyle}>Remaining</th>
+                  <th style={thStyle}>Remarks</th>
+                  <th style={thStyle}>Action</th>
                 </tr>
               </thead>
 
               <tbody>
                 {projects.map((p) => (
                   <tr key={p._id} style={{ borderBottom: '1px solid #eee' }}>
-                    <td style={{ padding: "12px" }}>
-                      <div style={{ maxWidth: "200px", overflowX: "auto", whiteSpace: "nowrap", border: "1px solid #ddd", borderRadius: "4px", padding: "4px 8px" }} title={p.name}>
+                    <td style={tdStyle}>
+                      <div style={scrollableCellStyle} title={p.name}>
                         {p.name}
                       </div>
                     </td>
-                    <td style={{ padding: "12px" }}>
+                    <td style={tdStyle}>
                       <div style={{ background: "#ddd", borderRadius: "8px", height: "12px", width: "100px", marginBottom: "4px" }}>
-                        <div style={{ width: `${p.progress}%`, background: p.progress === 100 ? "#4CAF50" : "#FF9800", height: "100%" }}></div>
+                        <div style={{ width: `${p.progress}%`, background: p.progress === 100 ? "#4CAF50" : "#FF9800", height: "100%", borderRadius: "8px" }}></div>
                       </div>
-                      <span style={{ fontSize: '12px' }}>{p.progress}%</span>
+                      <span style={{ fontSize: '12px', color: '#555' }}>{p.progress}%</span>
                     </td>
-                    <td style={{ padding: '12px' }}>{new Date(p.startDate).toLocaleDateString()}</td>
-                    <td style={{ padding: '12px' }}>{new Date(p.endDate).toLocaleDateString()}</td>
-                    <td style={{ padding: '12px' }}>{p.contactPerson || "-"}</td>
-                    <td style={{ padding: '12px' }}>{p.designation || "-"}</td>
-                    <td style={{ padding: '12px' }}>{p.contactNumber || "-"}</td>
-                    <td style={{ padding: '12px' }}>{p.budgetAllocated || "-"}</td>
-                    <td style={{ padding: '12px' }}>{p.remainingBudget || "-"}</td>
-                    <td style={{ padding: '12px' }}>
-                       <div style={{ maxWidth: "150px", overflowX: "auto", whiteSpace: "nowrap" }} title={p.remarks}>
+                    <td style={tdStyle}>{new Date(p.startDate).toLocaleDateString()}</td>
+                    <td style={tdStyle}>{new Date(p.endDate).toLocaleDateString()}</td>
+                    <td style={tdStyle}>{p.contactPerson || "-"}</td>
+                    <td style={tdStyle}>{p.designation || "-"}</td>
+                    <td style={tdStyle}>{p.contactNumber || "-"}</td>
+                    <td style={tdStyle}>{p.budgetAllocated || "-"}</td>
+                    <td style={tdStyle}>{p.remainingBudget || "-"}</td>
+                    <td style={tdStyle}>
+                       <div style={{ ...scrollableCellStyle, maxWidth: "150px", border: 'none', padding: 0 }} title={p.remarks}>
                         {p.remarks || "-"}
                       </div>
                     </td>
-                    <td style={{ padding: "12px" }}>
+                    <td style={tdStyle}>
                       <button
-                        style={{ backgroundColor: "#FF4D4F", color: "#fff", padding: "6px 12px", border: "none", borderRadius: "4px", cursor: "pointer" }}
+                        style={{ backgroundColor: "#FF4D4F", color: "#fff", padding: "6px 12px", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: '500' }}
                         onClick={() => handleDelete(p._id)}
                       >
                         Delete
@@ -160,7 +160,7 @@ export default function ProjectList() {
         </div>
       </main>
 
-      {/* FOOTER - CONSISTENT WITH OTHER PAGES */}
+      {/* FOOTER */}
       <footer style={{
         width: '100%',
         backgroundColor: '#f8f9fa',
@@ -196,3 +196,28 @@ export default function ProjectList() {
     </div>
   );
 }
+
+// Reusable Styles to keep code clean
+const thStyle = {
+  color: "#444",
+  fontWeight: 700,
+  textAlign: 'left',
+  padding: '12px',
+  fontSize: '14px'
+};
+
+const tdStyle = {
+  padding: '12px',
+  fontSize: '14px',
+  color: '#444'
+};
+
+const scrollableCellStyle = {
+  maxWidth: "200px",
+  overflowX: "auto",
+  whiteSpace: "nowrap",
+  border: "1px solid #ddd",
+  borderRadius: "4px",
+  padding: "4px 8px",
+  fontSize: "13px"
+};
