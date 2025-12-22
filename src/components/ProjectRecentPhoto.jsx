@@ -6,6 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 export default function ProjectRecentPhoto() {
   const [projects, setProjects] = useState([]);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [preview, setPreview] = useState({
     images: [],
     index: 0,
@@ -13,6 +14,13 @@ export default function ProjectRecentPhoto() {
   });
 
   const loggedDept = localStorage.getItem("loggedInDepartment");
+
+  // Handle Resize for Responsiveness
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // -------------------------------
   // Login protection
@@ -66,99 +74,96 @@ export default function ProjectRecentPhoto() {
   const currentImage = preview.images[preview.index];
 
   return (
-    <div
-      className={styles.projectWrapper}
-      style={{
-        padding: "30px",
-        background: "#f4f6f9",
-        minHeight: "100vh",
-      }}
-    >
-      {/* Page Title */}
-      <h1
-        style={{
-          fontSize: "28px",
-          fontWeight: 700,
-          marginBottom: "30px",
-          color: "#111", // ✅ full visibility
-          opacity: 1,   // ✅ full visibility
-        }}
-      >
-        📸 {loggedDept} Projects – Recent Photos
-      </h1>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: "#f4f6f9" }}>
+      
+      <main style={{ flex: 1, padding: isMobile ? "15px" : "30px" }}>
+        {/* Page Title */}
+        <h1
+          style={{
+            fontSize: isMobile ? "22px" : "28px",
+            fontWeight: 700,
+            marginBottom: "25px",
+            color: "#111",
+          }}
+        >
+          📸 {loggedDept} Projects – Recent Photos
+        </h1>
 
-      {/* Projects */}
-      {projects.length === 0 ? (
-        <p>No projects found.</p>
-      ) : (
-        projects.map((project) => (
-          <div
-            key={project._id}
-            style={{
-              background: "#fff",
-              padding: "20px",
-              borderRadius: "12px",
-              marginBottom: "30px",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-            }}
-          >
-            {/* Project Name */}
-            <h2
+        {/* Projects */}
+        {projects.length === 0 ? (
+          <p>No projects found.</p>
+        ) : (
+          projects.map((project) => (
+            <div
+              key={project._id}
               style={{
-                fontSize: "22px",
-                fontWeight: 700,
-                marginBottom: "15px",
-                wordBreak: "break-word",
-                color: "#222", // ✅ full visibility
-                opacity: 1,    // ✅ full visibility
+                background: "#fff",
+                padding: isMobile ? "15px" : "20px",
+                borderRadius: "12px",
+                marginBottom: "25px",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
               }}
             >
-              {project.name}
-            </h2>
+              {/* Project Name */}
+              <h2
+                style={{
+                  fontSize: isMobile ? "18px" : "22px",
+                  fontWeight: 700,
+                  marginBottom: "15px",
+                  wordBreak: "break-word",
+                  color: "#222",
+                }}
+              >
+                {project.name}
+              </h2>
 
-            {/* Photos */}
-            {project.photos?.length ? (
-              <div style={{ display: "flex", gap: "15px", flexWrap: "wrap" }}>
-                {project.photos.map((photo, i) => (
-                  <div
-                    key={i}
-                    onClick={() =>
-                      setPreview({
-                        images: project.photos.map((p) => p.url),
-                        index: i,
-                        zoom: false,
-                      })
-                    }
-                    style={{
-                      width: "150px",
-                      height: "150px",
-                      cursor: "pointer",
-                      borderRadius: "10px",
-                      overflow: "hidden",
-                      border: "1px solid #ddd",
-                    }}
-                  >
-                    <img
-                      src={photo.url}
-                      alt=""
+              {/* Photos Grid */}
+              {project.photos?.length ? (
+                <div style={{ 
+                  display: "grid", 
+                  gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, 150px)", 
+                  gap: isMobile ? "10px" : "15px" 
+                }}>
+                  {project.photos.map((photo, i) => (
+                    <div
+                      key={i}
+                      onClick={() =>
+                        setPreview({
+                          images: project.photos.map((p) => p.url),
+                          index: i,
+                          zoom: false,
+                        })
+                      }
                       style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
+                        aspectRatio: "1/1",
+                        cursor: "pointer",
+                        borderRadius: "10px",
+                        overflow: "hidden",
+                        border: "1px solid #ddd",
                       }}
-                    />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p>No photos yet.</p>
-            )}
-          </div>
-        ))
-      )}
+                    >
+                      <img
+                        src={photo.url}
+                        alt="Project detail"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p style={{ color: "#666", fontSize: "14px" }}>No photos yet.</p>
+              )}
+            </div>
+          ))
+        )}
+      </main>
 
       {/* -------------------------------
-          Image Preview Modal
+          Image Preview Modal (Mobile Optimized)
       -------------------------------- */}
       {preview.images.length > 0 && (
         <div
@@ -166,19 +171,20 @@ export default function ProjectRecentPhoto() {
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0,0,0,0.85)",
+            background: "rgba(0,0,0,0.92)",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            zIndex: 999,
+            zIndex: 1000,
+            padding: "10px"
           }}
         >
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
               position: "relative",
-              maxWidth: "90%",
-              maxHeight: "90%",
+              width: "100%",
+              maxWidth: "800px",
               textAlign: "center",
             }}
           >
@@ -188,11 +194,12 @@ export default function ProjectRecentPhoto() {
               alt="preview"
               style={{
                 maxWidth: "100%",
-                maxHeight: "80vh",
-                borderRadius: "10px",
+                maxHeight: isMobile ? "65vh" : "80vh",
+                borderRadius: "8px",
                 transform: preview.zoom ? "scale(1.5)" : "scale(1)",
                 transition: "transform 0.3s",
                 cursor: preview.zoom ? "zoom-out" : "zoom-in",
+                objectFit: "contain"
               }}
               onClick={() =>
                 setPreview((p) => ({ ...p, zoom: !p.zoom }))
@@ -202,25 +209,21 @@ export default function ProjectRecentPhoto() {
             {/* Controls: Previous / Download / Next */}
             <div
               style={{
-                marginTop: "15px",
+                marginTop: "20px",
                 display: "flex",
                 justifyContent: "center",
-                gap: "15px",
+                gap: "20px",
               }}
             >
-              <button onClick={prevImage} style={controlBtn}>
-                ◀
-              </button>
+              <button onClick={prevImage} style={controlBtn}>◀</button>
               <a
                 href={currentImage}
                 download
-                style={{ ...controlBtn, textDecoration: "none" }}
+                style={{ ...controlBtn, textDecoration: "none", display: 'flex', alignItems: 'center' }}
               >
                 ⬇
               </a>
-              <button onClick={nextImage} style={controlBtn}>
-                ▶
-              </button>
+              <button onClick={nextImage} style={controlBtn}>▶</button>
             </div>
 
             {/* Close Button */}
@@ -228,17 +231,21 @@ export default function ProjectRecentPhoto() {
               onClick={closePreview}
               style={{
                 position: "absolute",
-                top: "-12px",
-                right: "-12px",
+                top: isMobile ? "-45px" : "-15px",
+                right: isMobile ? "0px" : "-15px",
                 background: "#ff4d4f",
                 color: "#fff",
                 border: "none",
                 borderRadius: "50%",
-                width: "32px",
-                height: "32px",
+                width: "36px",
+                height: "36px",
                 cursor: "pointer",
-                fontSize: "18px",
+                fontSize: "20px",
                 fontWeight: "bold",
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                boxShadow: "0 2px 8px rgba(0,0,0,0.3)"
               }}
             >
               ×
@@ -246,20 +253,52 @@ export default function ProjectRecentPhoto() {
           </div>
         </div>
       )}
+
+      {/* FOOTER */}
+      <footer style={{
+        width: '100%',
+        backgroundColor: '#f8f9fa',
+        borderTop: '3px solid #0056b3',
+        padding: '12px 10px',
+        color: '#333',
+        textAlign: 'center',
+        fontFamily: "serif",
+        marginTop: 'auto'
+      }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+          <p style={{ margin: '0', fontSize: '0.85rem', fontWeight: 'bold', color: '#002147' }}>
+            District Administration
+          </p>
+          <p style={{ margin: '4px 0', fontSize: '0.7rem', opacity: 0.8 }}>
+            Designed and Developed by <strong>District Administration</strong>
+          </p>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            gap: '12px',
+            fontSize: '0.65rem',
+            borderTop: '1px solid #ddd',
+            marginTop: '8px',
+            paddingTop: '8px'
+          }}>
+            <span>&copy; {new Date().getFullYear()} All Rights Reserved.</span>
+            <span>|</span>
+            <span>Official Digital Portal</span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
 
-/* -------------------------------
-   Control button style
--------------------------------- */
 const controlBtn = {
-  padding: "8px 14px",
-  fontSize: "16px",
-  borderRadius: "6px",
+  padding: "10px 18px",
+  fontSize: "18px",
+  borderRadius: "8px",
   border: "none",
   cursor: "pointer",
   background: "#4CAF50",
   color: "#fff",
   fontWeight: 600,
+  boxShadow: "0 2px 5px rgba(0,0,0,0.2)"
 };

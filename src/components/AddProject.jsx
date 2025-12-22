@@ -16,8 +16,16 @@ export default function AddProject() {
   const [contactNumber, setContactNumber] = useState("");
   const [budget, setBudget] = useState("");
   const [remarks, setRemarks] = useState("");
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   const loggedDept = localStorage.getItem("loggedInDepartment");
+
+  // Handle Window Resize for Footer positioning
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     if (!loggedDept) {
@@ -27,7 +35,6 @@ export default function AddProject() {
   }, [loggedDept, navigate]);
 
   const handleAddProject = async () => {
-    // Convert numeric fields
     const progressValue = Number(progress);
     const budgetValue = Number(budget);
 
@@ -75,13 +82,19 @@ export default function AddProject() {
   };
 
   // Inline styles
-  const containerStyle = {
+  const mainContainerStyle = {
+    display: "flex",
+    flexDirection: "column",
+    minHeight: "100vh",
+    background: "#f4f6f9",
+  };
+
+  const formWrapperStyle = {
+    flex: 1,
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    minHeight: "100vh",
-    background: "#f4f6f9",
-    padding: "20px",
+    padding: "40px 20px",
   };
 
   const formStyle = {
@@ -132,118 +145,154 @@ export default function AddProject() {
   };
 
   return (
-    <div style={containerStyle}>
+    <div style={mainContainerStyle}>
       <ToastContainer position="top-right" autoClose={2000} />
-      <div style={formStyle}>
-        <h2
-          style={{
-            textAlign: "center",
-            marginBottom: "20px",
-            color: "#000",
-            fontWeight: 700,
-            opacity: 1,
-            letterSpacing: "0.5px",
-          }}
-        >
-          Add Project
-        </h2>
+      
+      <div style={formWrapperStyle}>
+        <div style={formStyle}>
+          <h2
+            style={{
+              textAlign: "center",
+              marginBottom: "20px",
+              color: "#000",
+              fontWeight: 700,
+              letterSpacing: "0.5px",
+            }}
+          >
+            Add Project
+          </h2>
 
-        <div style={inputGroupStyle}>
-          <label style={labelStyle}>Project Name</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            style={inputStyle}
-          />
+          <div style={inputGroupStyle}>
+            <label style={labelStyle}>Project Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              style={inputStyle}
+            />
+          </div>
+
+          <div style={inputGroupStyle}>
+            <label style={labelStyle}>Progress (%)</label>
+            <input
+              type="number"
+              value={progress}
+              onChange={(e) => setProgress(e.target.value)}
+              min="0"
+              max="100"
+              style={inputStyle}
+            />
+          </div>
+
+          <div style={inputGroupStyle}>
+            <label style={labelStyle}>Start Date</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              style={inputStyle}
+            />
+          </div>
+
+          <div style={inputGroupStyle}>
+            <label style={labelStyle}>Estimated End Date</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              style={inputStyle}
+            />
+          </div>
+
+          <div style={inputGroupStyle}>
+            <label style={labelStyle}>Contact Person Name</label>
+            <input
+              type="text"
+              value={contactPerson}
+              onChange={(e) => setContactPerson(e.target.value)}
+              style={inputStyle}
+            />
+          </div>
+
+          <div style={inputGroupStyle}>
+            <label style={labelStyle}>Designation</label>
+            <input
+              type="text"
+              value={designation}
+              onChange={(e) => setDesignation(e.target.value)}
+              style={inputStyle}
+            />
+          </div>
+
+          <div style={inputGroupStyle}>
+            <label style={labelStyle}>Contact Number</label>
+            <input
+              type="tel"
+              value={contactNumber}
+              onChange={(e) => setContactNumber(e.target.value)}
+              style={inputStyle}
+            />
+          </div>
+
+          <div style={inputGroupStyle}>
+            <label style={labelStyle}>Budget Allocated (in lakhs)</label>
+            <input
+              type="number"
+              value={budget}
+              onChange={(e) => setBudget(e.target.value)}
+              min="0"
+              style={inputStyle}
+            />
+          </div>
+
+          <div style={inputGroupStyle}>
+            <label style={labelStyle}>Remarks (optional)</label>
+            <textarea
+              value={remarks}
+              onChange={(e) => setRemarks(e.target.value)}
+              style={textareaStyle}
+            ></textarea>
+          </div>
+
+          <button style={buttonStyle} onClick={handleAddProject}>
+            Add Project
+          </button>
         </div>
-
-        <div style={inputGroupStyle}>
-          <label style={labelStyle}>Progress (%)</label>
-          <input
-            type="number"
-            value={progress}
-            onChange={(e) => setProgress(e.target.value)}
-            min="0"
-            max="100"
-            style={inputStyle}
-          />
-        </div>
-
-        <div style={inputGroupStyle}>
-          <label style={labelStyle}>Start Date</label>
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            style={inputStyle}
-          />
-        </div>
-
-        <div style={inputGroupStyle}>
-          <label style={labelStyle}>Estimated End Date</label>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            style={inputStyle}
-          />
-        </div>
-
-        <div style={inputGroupStyle}>
-          <label style={labelStyle}>Contact Person Name</label>
-          <input
-            type="text"
-            value={contactPerson}
-            onChange={(e) => setContactPerson(e.target.value)}
-            style={inputStyle}
-          />
-        </div>
-
-        <div style={inputGroupStyle}>
-          <label style={labelStyle}>Designation</label>
-          <input
-            type="text"
-            value={designation}
-            onChange={(e) => setDesignation(e.target.value)}
-            style={inputStyle}
-          />
-        </div>
-
-        <div style={inputGroupStyle}>
-          <label style={labelStyle}>Contact Number</label>
-          <input
-            type="tel"
-            value={contactNumber}
-            onChange={(e) => setContactNumber(e.target.value)}
-            style={inputStyle}
-          />
-        </div>
-
-        <div style={inputGroupStyle}>
-          <label style={labelStyle}>Budget Allocated (in lakhs)</label>
-          <input
-            type="number"
-            value={budget}
-            onChange={(e) => setBudget(e.target.value)}
-            min="0"
-            style={inputStyle}
-          />
-        </div>
-
-        <div style={inputGroupStyle}>
-          <label style={labelStyle}>Remarks (optional)</label>
-          <textarea
-            value={remarks}
-            onChange={(e) => setRemarks(e.target.value)}
-            style={textareaStyle}
-          ></textarea>
-        </div>
-
-        <button style={buttonStyle} onClick={handleAddProject}>
-          Add Project
-        </button>
       </div>
+
+      {/* FOOTER - VISIBLE AT BOTTOM OF PAGE */}
+      <footer style={{
+        width: '100%',
+        backgroundColor: '#f8f9fa',
+        borderTop: '3px solid #0056b3',
+        padding: '12px 10px',
+        color: '#333',
+        textAlign: 'center',
+        fontFamily: "serif",
+        marginTop: 'auto'
+      }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+          <p style={{ margin: '0', fontSize: '0.85rem', fontWeight: 'bold', color: '#002147' }}>
+            District Administration
+          </p>
+          <p style={{ margin: '4px 0', fontSize: '0.7rem', opacity: 0.8 }}>
+            Designed and Developed by <strong>District Administration</strong>
+          </p>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            gap: '12px',
+            fontSize: '0.65rem',
+            borderTop: '1px solid #ddd',
+            marginTop: '8px',
+            paddingTop: '8px'
+          }}>
+            <span>&copy; {new Date().getFullYear()} All Rights Reserved.</span>
+            <span>|</span>
+            <span>Official Digital Portal</span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
