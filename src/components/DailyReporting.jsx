@@ -41,7 +41,7 @@ export default function DailyReporting() {
     const loadProjects = async () => {
       try {
         const res = await axios.get(
-          `/api/department/projects?department=${loggedDept}`
+          `http://localhost:8000/api/department/projects?department=${loggedDept}`
         );
         setProjects(res.data.projects || []);
       } catch (err) {
@@ -94,7 +94,7 @@ export default function DailyReporting() {
 
     try {
       const res = await axios.put(
-        `/api/department/project/update/${selectedProject}`,
+        `http://localhost:8000/api/department/project/update/${selectedProject}`,
         formData
       );
 

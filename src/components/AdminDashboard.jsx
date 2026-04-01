@@ -49,7 +49,7 @@ export default function AdminDashboard() {
     const fetchAllProjects = async () => {
       setLoading(true);
       try {
-        const res = await axios.get("/api/department/projects?all=true");
+        const res = await axios.get("http://localhost:8000/api/department/projects?all=true");
 
         if (res.data?.projects) {
           const allProjects = res.data.projects;

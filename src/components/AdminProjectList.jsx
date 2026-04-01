@@ -26,7 +26,7 @@ export default function AdminProject() {
   useEffect(() => {
     const fetchAllProjects = async () => {
       try {
-        const res = await axios.get("/api/department/projects?all=true");
+        const res = await axios.get("http://localhost:8000/api/department/projects?all=true");
         setProjects(res.data.projects || []);
       } catch (error) {
         console.error("Error fetching projects:", error);

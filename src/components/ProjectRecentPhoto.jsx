@@ -40,7 +40,7 @@ export default function ProjectRecentPhoto() {
     const loadProjects = async () => {
       try {
         const res = await axios.get(
-          `/api/department/projects?department=${loggedDept}`
+          `http://localhost:8000/api/department/projects?department=${loggedDept}`
         );
         // ✅ Only keep projects that have photos to avoid empty cards
         const filtered = (res.data.projects || []).filter(

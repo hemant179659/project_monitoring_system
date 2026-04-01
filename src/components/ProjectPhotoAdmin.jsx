@@ -30,7 +30,7 @@ export default function ProjectPhotoAdmin() {
   useEffect(() => {
     const loadAllProjects = async () => {
       try {
-        const res = await axios.get("/api/department/projects?all=true");
+        const res = await axios.get("http://localhost:8000/api/department/projects?all=true");
         const projects = res.data.projects || [];
 
         const grouped = projects.reduce((acc, p) => {

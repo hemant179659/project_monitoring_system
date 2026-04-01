@@ -42,7 +42,7 @@ export default function DepartmentLogin() {
   const handleLogin = async () => {
     if (!email || !password) return toast.error("Please enter email and password");
     try {
-      const response = await axios.post("/api/department/login", { email, password });
+      const response = await axios.post("http://localhost:8000/api/department/login", { email, password });
       localStorage.setItem("loggedInDepartment", response.data.deptName);
       toast.success("Login successful!");
       setTimeout(() => navigate("/dept-dashboard"), 1200);

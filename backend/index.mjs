@@ -10,7 +10,8 @@ const app = express();
 app.use(cors({
   origin: [
     "https://usn.digital",
-    "https://www.usn.digital"
+    "https://www.usn.digital",
+    "http://localhost:5173"
   ],
   credentials: true
 }));

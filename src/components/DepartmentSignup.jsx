@@ -16,7 +16,7 @@ export default function DepartmentSignup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [verificationCode, setVerificationCode] = useState("");
+  
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   // Handle Responsive Layout
@@ -43,7 +43,7 @@ export default function DepartmentSignup() {
   // RESTORED SIGNUP LOGIC
   const handleSignup = async () => {
     // 1. Basic Validation
-    if (!deptName || !email || !password || !confirmPassword || !verificationCode) {
+    if (!deptName || !email || !password || !confirmPassword) {
       return toast.error("Please complete all fields");
     }
 
@@ -53,11 +53,11 @@ export default function DepartmentSignup() {
 
     try {
       // 2. API Call to Backend
-      const response = await axios.post("/api/department/signup", {
+      const response = await axios.post("http://localhost:8000/api/department/signup", {
         deptName,
         email,
         password,
-        verificationCode,
+        
       });
 
       // 3. Success Handling
@@ -166,13 +166,6 @@ export default function DepartmentSignup() {
               placeholder="Confirm Password" 
               value={confirmPassword} 
               onChange={(e) => setConfirmPassword(e.target.value)} 
-            />
-            <input 
-              className={styles.inputField} 
-              type="text" 
-              placeholder="Enter Verification Code" 
-              value={verificationCode} 
-              onChange={(e) => setVerificationCode(e.target.value)} 
             />
 
             <button className={styles.loginBtn} onClick={handleSignup}>Signup</button>
