@@ -26,7 +26,7 @@ export default function DepartmentForgot() {
     if (!email) return toast.warn("Please enter your email");
     setLoading(true);
     try {
-      await axios.post("/api/department/forgot-password", { email });
+      await axios.post("http://localhost:8000/api/department/forgot-password", { email });
       toast.success("Reset link sent to your email!");
       setTimeout(() => navigate("/dept-login"), 2500);
     } catch (error) {

@@ -1,10 +1,11 @@
-import { Department, Project } from "../models/department.model.mjs";
+import { Department, Project, Budget, DistrictBudget, Desto, Admin, DepartmentCode } from "../models/department.model.mjs";
 import bcrypt from "bcryptjs";
 import multer from "multer";
 import { S3Client, PutObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
+import jwt from "jsonwebtoken";
 dotenv.config();
 
 // AWS S3
@@ -15,6 +16,7 @@ const s3 = new S3Client({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   },
 });
+const JWT_SECRET = process.env.JWT_SECRET || "UDHAM_SINGH_NAGAR_SECRET_KEY_2026";
 
 // Multer setup
 const storage = multer.memoryStorage();
@@ -47,20 +49,68 @@ function extractKeyFromUrl(url) {
   }
 }
 
+export const adminLogin = async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    if (!email || !password)
+      return res.status(400).json({ message: "Email & password are required" });
+
+    const adminUser = await Admin.findOne({ email: email.toLowerCase() });
+    
+    if (!adminUser) {
+      return res.status(404).json({ message: "Admin account not found" });
+    }
+
+    if (adminUser.password !== password) {
+      return res.status(401).json({ message: "Invalid Credentials" });
+    }
+
+    const token = jwt.sign(
+      { id: adminUser._id, role: "superadmin" },
+      JWT_SECRET,
+      { expiresIn: "8h" }
+    );
+
+    res.status(200).json({ 
+      success: true, 
+      message: "Welcome Super Admin", 
+      token, 
+      role: "superadmin"
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error during admin login" });
+  }
+};
+
 // ---------------------------
-// DEPARTMENT SIGNUP
+// ✅ MODIFIED: DEPARTMENT SIGNUP (With Verification Code Check)
 // ---------------------------
 export const departmentSignup = async (req, res) => {
   console.log("Signup body:", req.body);
-  const { deptName, email, password } = req.body;
+  const { deptName, email, password, verificationCode } = req.body;
+  
   try {
-    if (!deptName || !email || !password)
-      return res.status(400).json({ message: "All fields required" });
+    // 1. Basic Fields Check
+    if (!deptName || !email || !password || !verificationCode)
+      return res.status(400).json({ message: "All fields including verification code are required" });
 
+    // 2. VERIFICATION CODE CHECK (Main Security Logic)
+    const validCodeEntry = await DepartmentCode.findOne({ deptName });
+
+    if (!validCodeEntry) {
+      return res.status(400).json({ message: `No verification record found for ${deptName}` });
+    }
+
+    if (validCodeEntry.verificationCode !== verificationCode) {
+      return res.status(401).json({ message: "Invalid verification code for this department" });
+    }
+
+    // 3. Check for existing user
     const existingDept = await Department.findOne({ $or: [{ deptName }, { email }] });
     if (existingDept)
       return res.status(400).json({ message: "Dept name or email already exists" });
 
+    // 4. Hash and Save
     const hashedPassword = await bcrypt.hash(password, 10);
     const newDept = new Department({ deptName, email, password: hashedPassword });
 
@@ -95,12 +145,24 @@ export const departmentLogin = async (req, res) => {
     const isMatch = await bcrypt.compare(password, dept.password);
     if (!isMatch) return res.status(400).json({ message: "Incorrect password" });
 
-    res.status(200).json({ message: "Login successful", deptName: dept.deptName });
+    const token = jwt.sign(
+      { id: dept._id, deptName: dept.deptName, role: "department" },
+      JWT_SECRET,
+      { expiresIn: "12h" }
+    );
+
+    res.status(200).json({ 
+      success: true,
+      message: "Login successful", 
+      token,
+      deptName: dept.deptName 
+    });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Server error during login" });
   }
 };
+
 
 // ---------------------------
 // FORGOT PASSWORD
@@ -119,7 +181,7 @@ export const forgotPassword = async (req, res) => {
     dept.resetTokenExpiry = expiry;
     await dept.save();
 
-    const resetLink = `https://www.usn.digital/dept-reset-password?token=${token}&email=${email}`;
+    const resetLink = `http://localhost:5173/dept-reset-password?token=${token}&email=${email}`;
 
     await transporter.sendMail({
       from: `"Project Monitoring" <${process.env.EMAIL_USER}>`,
@@ -167,6 +229,140 @@ export const resetPassword = async (req, res) => {
   }
 };
 
+export const destoLogin = async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    if (!email || !password)
+      return res.status(400).json({ message: "Email & password are required" });
+
+    const destoUser = await Desto.findOne({ email: email.toLowerCase() });
+    
+    if (!destoUser) {
+      return res.status(404).json({ message: "DESTO account not found" });
+    }
+
+    if (destoUser.password !== password) {
+      return res.status(401).json({ message: "Invalid Credentials" });
+    }
+
+    const token = jwt.sign(
+      { id: destoUser._id, role: destoUser.role },
+      JWT_SECRET,
+      { expiresIn: "10h" }
+    );
+
+    res.status(200).json({ 
+      success: true, 
+      message: "Login successful", 
+      token, 
+      role: destoUser.role 
+    });
+  } catch (error) {
+    console.error("Desto Login error:", error);
+    res.status(500).json({ message: "Server error during login" });
+  }
+};
+
+export const setDistrictTotal = async (req, res) => {
+  const { total } = req.body;
+  try {
+    let budget = await DistrictBudget.findOne();
+    if (budget) {
+      budget.totalJilaBudget = Number(total);
+      await budget.save();
+    } else {
+      budget = new DistrictBudget({ totalJilaBudget: Number(total) });
+      await budget.save();
+    }
+    res.json({ message: "Total Jila Budget updated successfully", total: budget.totalJilaBudget });
+  } catch (err) {
+    console.error("Set District Total Error:", err);
+    res.status(500).json({ message: "Server Error while setting district budget" });
+  }
+};
+
+export const getDistrictTotal = async (req, res) => {
+  try {
+    const budget = await DistrictBudget.findOne();
+    res.json(budget || { totalJilaBudget: 0 });
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching district budget" });
+  }
+};
+
+export const allocateBudget = async (req, res) => {
+  const { department, totalBudget } = req.body;
+  const budgetValue = Number(totalBudget);
+
+  try {
+    let budgetEntry = await Budget.findOne({ department });
+    if (budgetEntry) return res.status(400).json({ message: "Budget already exists for this department. Use Update." });
+
+    const districtData = await DistrictBudget.findOne();
+    if (districtData) {
+      const allBudgets = await Budget.find();
+      const currentTotalAllocated = allBudgets.reduce((sum, b) => sum + (b.totalBudget || 0), 0);
+      
+      if ((currentTotalAllocated + budgetValue) > districtData.totalJilaBudget) {
+        const remaining = districtData.totalJilaBudget - currentTotalAllocated;
+        return res.status(400).json({ 
+          message: `District Limit Exceeded! Only ₹${remaining} Lakhs available in Jila Yojna.` 
+        });
+      }
+    }
+
+    budgetEntry = new Budget({ department, totalBudget: budgetValue });
+    await budgetEntry.save();
+    res.status(201).json({ message: "Department Budget Allocated successfully" });
+  } catch (err) { 
+    res.status(500).json({ message: "Server Error during allocation" }); 
+  }
+};
+
+export const updateBudget = async (req, res) => {
+  const { department, newBudget } = req.body;
+  try {
+    await Budget.findOneAndUpdate({ department }, { totalBudget: Number(newBudget) });
+    res.json({ message: "Updated successfully" });
+  } catch (err) { res.status(500).json({ message: "Server Error" }); }
+};
+
+export const getBudgetSummary = async (req, res) => {
+  try {
+    const allBudgets = await Budget.find().lean();
+    
+    const summary = await Promise.all(allBudgets.map(async (b) => {
+      const projects = await Project.find({ department: b.department });
+      const totalSpent = projects.reduce((sum, p) => sum + (p.budgetAllocated || 0), 0);
+      const totalProjects = projects.length;
+      const completed = projects.filter(p => p.progress === 100).length;
+      const pending = totalProjects - completed;
+
+      return {
+        department: b.department,
+        totalBudget: b.totalBudget,
+        totalSpent,
+        remaining: b.totalBudget - totalSpent,
+        totalProjects,
+        completed,
+        pending
+      };
+    }));
+    
+    res.json(summary);
+  } catch (err) { 
+    console.error("Budget Summary Error:", err);
+    res.status(500).json({ message: "Error fetching summary" }); 
+  }
+};
+
+export const getDeptBudget = async (req, res) => {
+  try {
+    const budget = await Budget.findOne({ department: req.params.deptName });
+    res.json(budget || { totalBudget: 0 });
+  } catch (err) { res.status(500).json({ message: "Error" }); }
+};
+
 // ---------------------------
 // ADD PROJECT
 // ---------------------------
@@ -189,22 +385,31 @@ export const addProject = async (req, res) => {
     const budgetValue = Number(budgetAllocated);
 
     if (
-      !name ||
-      !startDate ||
-      !endDate ||
-      !department ||
-      isNaN(progressValue) ||
-      progressValue < 0 ||
-      progressValue > 100 ||
-      isNaN(budgetValue) ||
-      budgetValue <= 0 ||
-      !contactPerson ||
-      !designation ||
-      !contactNumber
+      !name || !startDate || !endDate || !department ||
+      isNaN(progressValue) || progressValue < 0 || progressValue > 100 ||
+      isNaN(budgetValue) || budgetValue <= 0 ||
+      !contactPerson || !designation || !contactNumber
     ) {
       return res.status(400).json({
-        message:
-          "All fields required. Progress 0–100, budget > 0, and contact details required.",
+        message: "All fields required. Progress 0–100, budget > 0, and contact details required.",
+      });
+    }
+
+    const deptBudgetData = await Budget.findOne({ department });
+    
+    if (!deptBudgetData) {
+      return res.status(400).json({ 
+        message: `DESTO has not allocated any budget to the ${department} department yet.` 
+      });
+    }
+
+    const existingProjects = await Project.find({ department });
+    const totalSpentSoFar = existingProjects.reduce((sum, p) => sum + (p.budgetAllocated || 0), 0);
+
+    if ((totalSpentSoFar + budgetValue) > deptBudgetData.totalBudget) {
+      const remainingAmount = deptBudgetData.totalBudget - totalSpentSoFar;
+      return res.status(400).json({
+        message: `Budget Limit Exceeded! Your department's remaining budget is ₹${remainingAmount} Lakhs. You cannot add a project of ₹${budgetValue} Lakhs.`
       });
     }
 
@@ -225,6 +430,7 @@ export const addProject = async (req, res) => {
 
     await newProject.save();
     res.status(201).json({ message: "Project added successfully", project: newProject });
+
   } catch (error) {
     console.error("Add project error:", error);
     res.status(500).json({ message: "Server error while adding project" });
@@ -273,7 +479,15 @@ export const updateProject = async (req, res) => {
     const project = await Project.findById(id);
     if (!project) return res.status(404).json({ message: "Project not found" });
 
-    const { progress, remarks, remainingBudget } = req.body;
+    const { 
+      name, 
+      progress, 
+      remarks, 
+      budgetAllocated, 
+      contactPerson, 
+      designation, 
+      contactNumber 
+    } = req.body;
 
     if (req.files && req.files.length > 0) {
       if (Array.isArray(project.photos) && project.photos.length > 0) {
@@ -292,9 +506,7 @@ export const updateProject = async (req, res) => {
                 Delete: { Objects: objectsToDelete },
               })
             );
-          } catch (err) {
-            console.log("S3 delete error:", err);
-          }
+          } catch (err) { console.log("S3 delete error:", err); }
         }
       }
 
@@ -309,7 +521,6 @@ export const updateProject = async (req, res) => {
             ContentType: file.mimetype,
           })
         );
-
         uploadedPhotos.push({
           key,
           url: `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`,
@@ -319,15 +530,20 @@ export const updateProject = async (req, res) => {
       project.photos = uploadedPhotos;
     }
 
+    if (name !== undefined) project.name = name;
     if (progress !== undefined) project.progress = Number(progress);
     if (remarks !== undefined) project.remarks = remarks;
-    if (remainingBudget !== undefined) project.remainingBudget = Number(remainingBudget);
+    if (budgetAllocated !== undefined) project.budgetAllocated = Number(budgetAllocated);
+    if (contactPerson !== undefined) project.contactPerson = contactPerson;
+    if (designation !== undefined) project.designation = designation;
+    if (contactNumber !== undefined) project.contactNumber = contactNumber;
 
     await project.save();
     res.status(200).json({ message: "Project updated successfully", project });
+
   } catch (error) {
-    console.error("Update project error:", error);
-    res.status(500).json({ message: "Server error while updating project" });
+    console.error("Update error:", error);
+    res.status(500).json({ message: "Server error while updating" });
   }
 };
 

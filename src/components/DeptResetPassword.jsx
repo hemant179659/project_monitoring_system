@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import axios from "axios";
-import styles from "../styles/styles.module.css";
 import BackButton from "./BackButton";
 import backgroundImage from "../assets/login.jpg";
 
@@ -17,158 +16,320 @@ export default function DeptResetPassword() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [lang, setLang] = useState("hi");
 
+  /* ================= RESPONSIVE ================= */
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  /* ================= VALIDATE LINK ================= */
   useEffect(() => {
     if (!token || !email) {
-      alert("Invalid or expired link");
-      navigate("/dept-login");
+      alert(lang === "hi" ? "अमान्य या समाप्त लिंक" : "Invalid or expired link");
+      navigate("/dept-login", { replace: true });
     }
-  }, [token, email, navigate]);
+  }, [token, email, navigate, lang]);
 
+  /* ================= RESET ================= */
   const handleReset = async () => {
-    if (!newPassword || !confirmPassword) return alert("Please fill all fields");
-    if (newPassword !== confirmPassword) return alert("Passwords do not match");
+    if (!newPassword || !confirmPassword) {
+      return alert(
+        lang === "hi"
+          ? "कृपया सभी फ़ील्ड भरें"
+          : "Please fill all fields"
+      );
+    }
+
+    if (newPassword !== confirmPassword) {
+      return alert(
+        lang === "hi"
+          ? "पासवर्ड मेल नहीं खा रहे"
+          : "Passwords do not match"
+      );
+    }
 
     setLoading(true);
     try {
-      const res = await axios.post("/api/department/reset-password", {
-        email,
-        token,
-        newPassword,
-      });
+      const res = await axios.post(
+        `http://localhost:8000/api/department/reset-password`,
+        { email, token, newPassword }
+      );
 
-      alert(res.data.message);
-      navigate("/dept-login");
+      alert(
+        res.data.message ||
+          (lang === "hi"
+            ? "पासवर्ड सफलतापूर्वक बदला गया"
+            : "Password reset successfully")
+      );
+
+      navigate("/dept-login", { replace: true });
     } catch (err) {
-      console.error(err);
-      alert(err.response?.data?.message || "Something went wrong");
+      alert(
+        err.response?.data?.message ||
+          (lang === "hi" ? "कुछ त्रुटि हुई" : "Something went wrong")
+      );
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
-    <div style={{ position: 'relative', minHeight: '100vh', width: '100%', display: 'flex', flexDirection: 'column' }}>
-      
-      <div className={styles.loginPage} style={{ flex: 1, display: 'flex' }}>
-        
-        {/* LEFT SECTION - Image Zoomed and Positioned */}
-        <div
-          className={styles.leftSection}
-          style={{ 
-            backgroundImage: `url(${backgroundImage})`,
-            backgroundSize: '115%',       // Increased zoom
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'center 20%', // Visible above footer
-            backgroundColor: '#ffffff',
-            display: isMobile ? 'none' : 'flex',
-            flexDirection: 'column',
-            justifyContent: 'flex-start',
-            paddingTop: '20px',
-            height: 'calc(100vh - 50px)', // Stops before slim footer
-            borderRight: '1px solid #eee'
-          }}
-        >
-          <BackButton onClick={() => navigate("/dept-login")} />
-        </div>
+    <div style={pageWrapper} lang={lang}>
+      {/* ================= SKIP LINK ================= */}
+      <a href="#main-content" style={skipLink}>
+        {lang === "hi" ? "मुख्य सामग्री पर जाएँ" : "Skip to main content"}
+      </a>
 
-        {/* RIGHT SECTION - Centered and Shifted UP */}
-        <div 
-          className={styles.rightSection}
-          style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',    // Vertical center
-            alignItems: 'center',        // Horizontal center
-            paddingBottom: '100px',      // Shifted UP from center
-            height: 'calc(100vh - 50px)',
-            backgroundColor: "#f5f5f5"
-          }}
-        >
-          <div className={styles.loginBox} style={{ width: '90%', maxWidth: '400px' }}>
-            {/* Reduced Title Size */}
-            <h2 style={{ fontSize: '1.4rem', marginBottom: '20px', textAlign: 'center' }}>
-              Reset Password
-            </h2>
+      {/* ================= LANGUAGE TOGGLE ================= */}
+      <div style={langToggle}>
+        <button onClick={() => setLang("hi")} style={langBtn(lang === "hi")}>
+          हिंदी
+        </button>
+        <button onClick={() => setLang("en")} style={langBtn(lang === "en")}>
+          EN
+        </button>
+      </div>
 
+      {/* ================= MAIN CONTENT ================= */}
+      <div style={contentWrapper}>
+        {!isMobile && (
+          <aside style={leftSection} aria-hidden="true">
+            <div style={leftImage} />
+            <div style={overlay} />
+            <BackButton onClick={() => navigate("/dept-login")} />
+          </aside>
+        )}
+
+        <main id="main-content" style={rightSection} role="main">
+          <section style={loginBox} aria-labelledby="reset-heading">
+            <h1 id="reset-heading" style={title}>
+              {lang === "hi" ? "पासवर्ड रीसेट करें" : "Reset Password"}
+            </h1>
+
+            <label style={label}>
+              {lang === "hi" ? "नया पासवर्ड" : "New Password"}
+            </label>
             <input
-              className={styles.inputField}
+              style={input}
               type="password"
-              placeholder="New Password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
             />
 
+            <label style={label}>
+              {lang === "hi"
+                ? "पासवर्ड पुनः दर्ज करें"
+                : "Confirm Password"}
+            </label>
             <input
-              className={styles.inputField}
+              style={input}
               type="password"
-              placeholder="Confirm Password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
 
             <button
-              className={styles.loginBtn}
+              style={primaryBtn}
               onClick={handleReset}
               disabled={loading}
             >
-              {loading ? "Resetting..." : "Reset Password"}
+              {loading
+                ? lang === "hi"
+                  ? "रीसेट हो रहा है..."
+                  : "Resetting..."
+                : lang === "hi"
+                ? "पासवर्ड रीसेट करें"
+                : "Reset Password"}
             </button>
-            
-            <button 
-              className={styles.loginBtn} 
-              style={{ backgroundColor: '#6c757d', marginTop: '10px' }}
+
+            <button
+              style={secondaryBtn}
               onClick={() => navigate("/dept-login")}
             >
-              Cancel
+              {lang === "hi" ? "लॉगिन पर वापस जाएँ" : "Back to Login"}
             </button>
-          </div>
-        </div>
+          </section>
+        </main>
       </div>
 
-      {/* SLIM STICKY FOOTER */}
-      <footer style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        width: '100%',
-        backgroundColor: '#f8f9fa',
-        borderTop: '3px solid #0056b3',
-        padding: '8px 10px',
-        color: '#333',
-        textAlign: 'center',
-        zIndex: 1000,
-        fontFamily: "serif",
-        boxShadow: '0 -2px 10px rgba(0,0,0,0.1)'
-      }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <p style={{ margin: '0', fontSize: '0.8rem', fontWeight: 'bold', color: '#002147' }}>
-            District Administration
-          </p>
-          <p style={{ margin: '2px 0', fontSize: '0.65rem', opacity: 0.8 }}>
-            Designed and Developed by <strong>District Administration</strong>
-          </p>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            gap: '8px',
-            fontSize: '0.6rem',
-            borderTop: '1px solid #ddd',
-            marginTop: '4px',
-            paddingTop: '4px'
-          }}>
-            <span>&copy; {new Date().getFullYear()} All Rights Reserved.</span>
-            <span>|</span>
-            <span>Official Digital Portal</span>
-          </div>
-        </div>
+      {/* ================= FOOTER (HOME LIKE) ================= */}
+      <footer style={footerStyle} role="contentinfo">
+        <p style={{ margin: 0, fontWeight: 700 }}>
+          {lang === "hi"
+            ? "जिला प्रशासन, उत्तराखंड"
+            : "District Administration, Uttarakhand"}
+        </p>
+        <p style={{ margin: "4px 0", fontSize: "0.8rem" }}>
+          Designed & Developed by District Administration
+        </p>
+
+        <nav aria-label="Footer Navigation">
+          <ul style={footerLinks}>
+            <li><Link to="/privacy-policy">Privacy Policy</Link></li>
+            <li><Link to="/terms">Terms & Conditions</Link></li>
+            <li><Link to="/accessibility">Accessibility</Link></li>
+            <li><Link to="/contact">Contact Us</Link></li>
+          </ul>
+        </nav>
       </footer>
     </div>
   );
 }
+
+/* ===================== STYLES ===================== */
+
+const pageWrapper = {
+  minHeight: "100vh",
+  display: "flex",
+  flexDirection: "column",
+  backgroundColor: "#f4f6f9",
+};
+
+const contentWrapper = {
+  flex: 1,
+  display: "flex",
+};
+
+/* Skip link */
+const skipLink = {
+  position: "absolute",
+  top: "-40px",
+  left: "10px",
+  background: "#000",
+  color: "#fff",
+  padding: "6px 10px",
+  zIndex: 1000,
+  textDecoration: "none",
+};
+
+/* Language toggle */
+const langToggle = {
+  position: "absolute",
+  top: "10px",
+  right: "10px",
+  display: "flex",
+  gap: "6px",
+};
+
+const langBtn = (active) => ({
+  padding: "5px 9px",
+  border: "1px solid #0056b3",
+  backgroundColor: active ? "#0056b3" : "#ffffff",
+  color: active ? "#ffffff" : "#0056b3",
+  fontSize: "0.8rem",
+  fontWeight: 600,
+  cursor: "pointer",
+});
+
+/* Left image */
+const leftSection = {
+  flex: 1,
+  position: "relative",
+};
+
+const leftImage = {
+  position: "absolute",
+  inset: 0,
+  backgroundImage: `url(${backgroundImage})`,
+  backgroundSize: "cover",
+  backgroundPosition: "center",
+};
+
+const overlay = {
+  position: "absolute",
+  inset: 0,
+  backgroundColor: "rgba(0,0,0,0.25)",
+};
+
+/* Right section */
+const rightSection = {
+  flex: 1,
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  backgroundColor: "#ffffff",
+};
+
+/* Reset box */
+const loginBox = {
+  width: "100%",
+  maxWidth: 400,
+  background: "#ffffff",
+  padding: 26,
+  borderRadius: 8,
+  boxShadow: "0 4px 14px rgba(0,0,0,0.15)",
+};
+
+const title = {
+  textAlign: "center",
+  marginBottom: 16,
+  fontSize: "1.1rem",
+  fontWeight: 700,
+  color: "#000",
+};
+
+const label = {
+  display: "block",
+  marginBottom: 4,
+  fontSize: "0.85rem",
+  fontWeight: 500,
+  color: "#000",
+};
+
+const input = {
+  width: "100%",
+  padding: 11,
+  marginBottom: 14,
+  borderRadius: 6,
+  border: "1px solid #000",
+  fontSize: "0.95rem",
+  fontWeight: 500,
+  color: "#000",
+};
+
+const primaryBtn = {
+  width: "100%",
+  padding: 11,
+  backgroundColor: "#0056b3",
+  color: "#fff",
+  border: "none",
+  borderRadius: 6,
+  fontSize: "0.95rem",
+  fontWeight: 600,
+  cursor: "pointer",
+};
+
+const secondaryBtn = {
+  width: "100%",
+  padding: 9,
+  marginTop: 10,
+  backgroundColor: "#e9ecef",
+  color: "#000",
+  border: "1px solid #000",
+  borderRadius: 6,
+  fontSize: "0.85rem",
+  fontWeight: 500,
+  cursor: "pointer",
+};
+
+/* Footer – same as Home */
+const footerStyle = {
+  backgroundColor: "#ffffff",
+  textAlign: "center",
+  padding: "14px 10px",
+  borderTop: "4px solid #0056b3",
+  color: "#000",
+};
+
+const footerLinks = {
+  listStyle: "none",
+  padding: 0,
+  margin: "8px 0 0",
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "12px",
+  justifyContent: "center",
+};

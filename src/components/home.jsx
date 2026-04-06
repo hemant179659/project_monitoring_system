@@ -1,142 +1,236 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
-import backgroundImage from '../assets/work.jpeg';
+import backgroundImage from "../assets/work.jpeg";
 
 export default function Home() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [isSmallMobile, setIsSmallMobile] = useState(window.innerWidth < 400);
+  const [lang, setLang] = useState("en");
 
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-      setIsSmallMobile(window.innerWidth < 400);
-    };
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return (
-    <div style={{
-      position: 'relative',
-      height: '100vh', // Changed to fixed height to ensure vertical centering
-      width: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center', // Centers main content vertically
-      alignItems: 'center', // Centers main content horizontally
-      backgroundColor: '#001529',
-      fontFamily: "'serif', 'Times New Roman', Times, serif",
-      overflow: 'hidden' // Prevents scroll since we are using 100vh
-    }}>
-      
-      {/* Background Layer */}
-      <div style={{
-        position: 'fixed',
-        top: 0, left: 0, right: 0, bottom: 0,
-        backgroundImage: `url(${backgroundImage})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        opacity: 0.45, 
-        zIndex: 1
-      }} />
+    <div style={pageWrapper} lang={lang}>
+      {/* ================= BACKGROUND ================= */}
+      <div style={backgroundOverlay(backgroundImage)} aria-hidden="true" />
 
-      {/* Main Content Layer */}
-      <div style={{ 
-        position: 'relative', 
-        zIndex: 3, 
-        textAlign: 'center', 
-        color: '#ffffff', 
-        width: '90%',
-        maxWidth: '800px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center', // Ensures title/line/buttons stay centered
-        marginTop: '-50px' // Compensates for the footer height to look perfectly centered
-      }}>
-        <h1 style={{ 
-          fontSize: isSmallMobile ? '1.5rem' : isMobile ? '1.8rem' : '3.2rem', 
-          marginBottom: '10px', 
-          fontWeight: 'bold',
-          letterSpacing: '1px',
-          textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-          lineHeight: '1.2',
-          textTransform: 'uppercase'
-        }}>
-          Project Monitoring Dashboard
-        </h1>
-        
-        <div style={{ 
-            width: '80px', 
-            height: '4px', 
-            backgroundColor: '#ff9933', 
-            margin: '10px 0 40px 0' // Removed auto margin because parent is centered flex
-        }}></div>
-
-        <div style={{ 
-          display: 'flex', 
-          flexDirection: isMobile ? 'column' : 'row',
-          gap: isMobile ? '15px' : '25px', 
-          justifyContent: 'center',
-          alignItems: 'center',
-          width: '100%'
-        }}>
-          <Link to="/admin-login" style={govButtonStyle('#0056b3', isMobile)}>ADMIN LOGIN</Link>
-          <Link to="/dept-login" style={govButtonStyle('#28a745', isMobile)}>DEPARTMENT LOGIN</Link>
-        </div>
+      {/* ================= LANG TOGGLE ================= */}
+      <div style={langToggle}>
+        <button onClick={() => setLang("hi")} style={langBtn(lang === "hi")}>हिन्दी</button>
+        <button onClick={() => setLang("en")} style={langBtn(lang === "en")}>English</button>
       </div>
 
-      {/* SLIM FOOTER */}
-      <footer style={{
-        position: 'fixed',
-        bottom: 0,
-        width: '100%',
-        zIndex: 10,
-        backgroundColor: '#f8f9fa',
-        borderTop: '3px solid #0056b3',
-        padding: '8px 10px',
-        color: '#333',
-        textAlign: 'center',
-      }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <p style={{ margin: '0', fontSize: '0.8rem', fontWeight: 'bold', color: '#002147' }}>
-            District Administration
-          </p>
-          <p style={{ margin: '2px 0', fontSize: '0.65rem', opacity: 0.8 }}>
-            Designed and Developed by <strong>District Administration</strong>
-          </p>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            gap: '8px',
-            fontSize: '0.6rem',
-            borderTop: '1px solid #ddd',
-            marginTop: '4px',
-            paddingTop: '4px'
-          }}>
-            <span>&copy; {new Date().getFullYear()} All Rights Reserved.</span>
-            <span>|</span>
-            <span>Official Digital Portal</span>
+      {/* ================= HEADER ================= */}
+      <header style={headerStyle}>
+        <h1 style={titleStyle(isMobile)}>
+          {lang === "hi" ? "जिला योजना निगरानी प्रणाली" : "District Plan Monitoring System"}
+        </h1>
+        <div style={accentLine}></div>
+        <p style={locationText}>DISTRICT ADMINISTRATION, UTTARAKHAND</p>
+      </header>
+
+      {/* ================= MAIN BUTTONS ================= */}
+      <main style={mainStyle}>
+        <div style={buttonGrid(isMobile)}>
+          <Link to="/admin-login" className="btn-3d" style={govButton("#5c2d91", isMobile)}>
+            {lang === "hi" ? "प्रशासन लॉगिन" : "Administration LOGIN"}
+          </Link>
+          <Link to="/desto-login" className="btn-3d" style={govButton("#d35400", isMobile)}>
+            {lang === "hi" ? "डीईएसटीओ लॉगिन" : "DESTO LOGIN"}
+          </Link>
+          <Link to="/dept-login" className="btn-3d" style={govButton("#21618c", isMobile)}>
+            {lang === "hi" ? "विभाग लॉगिन" : "DEPT. LOGIN"}
+          </Link>
+        </div>
+      </main>
+
+      {/* ================= BALANCED FOOTER ================= */}
+      <footer style={footerStyle}>
+        <div style={footerContainer}>
+          <div style={footerBrand}>
+            <strong>{lang === "hi" ? "जिला प्रशासन, उत्तराखंड" : "DISTRICT ADMINISTRATION, UTTARAKHAND"}</strong>
           </div>
+          
+          <nav style={footerLinks}>
+            <Link to="/privacy" style={fLink}>Privacy Policy</Link>
+            <span style={fSep}>|</span>
+            <Link to="/terms" style={fLink}>Terms & Conditions</Link>
+            <span style={fSep}>|</span>
+            <Link to="/budgetallocation" style={fLink}>Budget Allocation</Link>
+            <span style={fSep}>|</span>
+            <Link to="/update-budget" style={fLink}>Update Budget</Link>
+          </nav>
+          
+          <p style={copyright}>
+            © {new Date().getFullYear()} Designed & Developed by District Administration
+          </p>
         </div>
       </footer>
+
+      <style>
+        {`
+          .btn-3d { transition: all 0.1s ease-in-out; cursor: pointer; text-decoration: none; }
+          .btn-3d:active { transform: translateY(4px); border-bottom-width: 2px !important; box-shadow: 0 2px 5px rgba(0,0,0,0.3) !important; }
+          .btn-3d:hover { filter: brightness(1.1); }
+        `}
+      </style>
     </div>
   );
 }
 
-const govButtonStyle = (bgColor, isMobile) => ({
-  padding: '14px 24px',
-  backgroundColor: bgColor,
-  color: 'white',
-  textDecoration: 'none',
-  borderRadius: '4px',
-  fontWeight: '600',
-  fontSize: '0.9rem',
-  textAlign: 'center',
-  width: isMobile ? '80%' : '240px',
-  maxWidth: '300px',
-  display: 'inline-block',
-  boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
-  border: '1px solid rgba(255,255,255,0.2)',
-  letterSpacing: '1px',
-  transition: 'transform 0.2s ease'
+/* ===================== STYLES ===================== */
+
+const pageWrapper = {
+  minHeight: "100vh",
+  display: "flex",
+  flexDirection: "column",
+  backgroundColor: "#001529",
+  position: "relative",
+  fontFamily: "'Open Sans', Arial, sans-serif",
+  overflow: "hidden"
+};
+
+const backgroundOverlay = (img) => ({
+  position: "absolute",
+  inset: 0,
+  backgroundImage: `url(${img})`,
+  backgroundSize: "cover",
+  backgroundPosition: "center",
+  opacity: 0.45,
+  zIndex: 0,
 });
+
+const langToggle = {
+  position: "absolute",
+  top: "15px",
+  right: "15px",
+  zIndex: 10,
+  display: "flex",
+  border: "1px solid #fff",
+  borderRadius: "3px",
+  overflow: "hidden"
+};
+
+const langBtn = (active) => ({
+  padding: "5px 12px",
+  backgroundColor: active ? "#fff" : "transparent",
+  color: active ? "#000" : "#fff",
+  border: "none",
+  cursor: "pointer",
+  fontSize: "0.75rem",
+  fontWeight: "bold",
+});
+
+const headerStyle = {
+  position: "relative",
+  zIndex: 1,
+  textAlign: "center",
+  padding: "70px 20px 20px",
+  color: "#fff",
+};
+
+const titleStyle = (isMobile) => ({
+  fontSize: isMobile ? "1.6rem" : "3rem",
+  margin: "0",
+  fontWeight: "800",
+  textTransform: "uppercase",
+  textShadow: "2px 4px 8px rgba(0,0,0,0.7)",
+});
+
+const accentLine = {
+  width: "80px",
+  height: "4px",
+  backgroundColor: "#ff9933",
+  margin: "12px auto",
+};
+
+const locationText = {
+  fontSize: "0.9rem",
+  letterSpacing: "2px",
+  fontWeight: "600",
+  opacity: 0.9,
+};
+
+const mainStyle = {
+  flex: 1,
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  zIndex: 1,
+};
+
+const buttonGrid = (isMobile) => ({
+  display: "flex",
+  flexDirection: isMobile ? "column" : "row",
+  gap: "20px",
+});
+
+const govButton = (bgColor, isMobile) => ({
+  backgroundColor: bgColor,
+  color: "#fff",
+  padding: "18px 25px",
+  borderRadius: "5px",
+  textAlign: "center",
+  fontSize: "1rem",
+  fontWeight: "bold",
+  minWidth: isMobile ? "250px" : "230px",
+  borderBottom: "5px solid rgba(0,0,0,0.4)",
+  boxShadow: "0 6px 12px rgba(0,0,0,0.4)",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+});
+
+// ================= BALANCED FOOTER =================
+const footerStyle = {
+  position: "relative",
+  zIndex: 1,
+  backgroundColor: "#ffffff",
+  padding: "15px 0", // मध्यम पैडिंग (Balanced)
+  borderTop: "5px solid #21618c",
+};
+
+const footerContainer = {
+  width: "90%",
+  maxWidth: "550px", // कंटेंट विड्थ सेट है
+  margin: "0 auto",
+  textAlign: "center",
+};
+
+const footerBrand = {
+  fontSize: "0.85rem",
+  fontWeight: "700",
+  color: "#333",
+  marginBottom: "8px",
+};
+
+const footerLinks = {
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  gap: "12px",
+  marginBottom: "8px",
+};
+
+const fLink = {
+  color: "#21618c",
+  textDecoration: "none",
+  fontWeight: "600",
+  fontSize: "0.75rem",
+};
+
+const fSep = {
+  color: "#ddd",
+  fontSize: "0.75rem"
+};
+
+const copyright = {
+  fontSize: "0.7rem",
+  color: "#666",
+  margin: 0,
+  borderTop: "1px solid #f0f0f0",
+  paddingTop: "8px"
+};

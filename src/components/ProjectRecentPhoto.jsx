@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
-import { toast } from "react-toastify";
+// ✅ Tera Custom API instance
+import API from "../api/axios"; 
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { FaCamera, FaDownload, FaChevronLeft, FaChevronRight, FaTimes } from "react-icons/fa";
 
 export default function ProjectRecentPhoto() {
   const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [preview, setPreview] = useState({
     images: [],
@@ -14,291 +17,190 @@ export default function ProjectRecentPhoto() {
 
   const loggedDept = localStorage.getItem("loggedInDepartment");
 
-  // -------------------------------
-  // 📱 Mobile Responsiveness Listener
-  // -------------------------------
+  // 📱 Responsiveness Listener
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // -------------------------------
-  // 🔐 Auth Protection
-  // -------------------------------
+  // 🔐 Auth Protection (Silently handles redirect via API instance if unauthorized)
   useEffect(() => {
     if (!loggedDept) {
-      toast.error("Please login first");
+      toast.error("Session expired. Please login again.");
       window.location.replace("/dept-login");
     }
   }, [loggedDept]);
 
-  // -------------------------------
-  // 📡 Fetch Data (Filtered for Photos)
-  // -------------------------------
+  // 📡 Fetch Projects using Custom API Instance
   useEffect(() => {
     const loadProjects = async () => {
+      setLoading(true);
       try {
-        const res = await axios.get(
-          `http://localhost:8000/api/department/projects?department=${loggedDept}`
-        );
-        // ✅ Only keep projects that have photos to avoid empty cards
+        // Backend se sirf apne department ke projects mangwa rahe hain
+        const res = await API.get(`/department/projects?department=${loggedDept}`);
+        
+        // Filter: Sirf wahi projects dikhao jinme photos hain
         const filtered = (res.data.projects || []).filter(
           (p) => p.photos && p.photos.length > 0
         );
         setProjects(filtered);
       } catch (err) {
-        console.error("Error fetching projects:", err);
-        toast.error("Failed to fetch projects");
+        console.error("Fetch Error:", err);
+        if (err.response?.status !== 401) {
+          toast.error("Photos load karne mein error aaya.");
+        }
+      } finally {
+        setLoading(false);
       }
     };
     if (loggedDept) loadProjects();
   }, [loggedDept]);
 
-  // -------------------------------
-  // 🔍 Image Preview Helpers
-  // -------------------------------
-  const nextImage = () =>
-    setPreview((p) => ({
-      ...p,
-      index: (p.index + 1) % p.images.length,
-      zoom: false,
-    }));
-
-  const prevImage = () =>
-    setPreview((p) => ({
-      ...p,
-      index: (p.index - 1 + p.images.length) % p.images.length,
-      zoom: false,
-    }));
-
-  const closePreview = () =>
-    setPreview({ images: [], index: 0, zoom: false });
+  // 🔍 Preview Handlers
+  const nextImage = () => setPreview((p) => ({ ...p, index: (p.index + 1) % p.images.length, zoom: false }));
+  const prevImage = () => setPreview((p) => ({ ...p, index: (p.index - 1 + p.images.length) % p.images.length, zoom: false }));
+  const closePreview = () => setPreview({ images: [], index: 0, zoom: false });
 
   const currentImage = preview.images[preview.index];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: "#f4f6f9" }}>
-      
-      <main style={{ flex: 1, padding: isMobile ? "15px" : "30px" }}>
-        <h1
-          style={{
-            fontSize: isMobile ? "22px" : "28px",
-            fontWeight: 700,
-            marginBottom: "25px",
-            color: "#111",
-            textAlign: isMobile ? "center" : "left"
-          }}
-        >
-          📸 Recent Photos – <span style={{ color: "#0056b3" }}>{loggedDept}</span>
-        </h1>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: "#f8fafc" }}>
+      <ToastContainer position="top-right" autoClose={2000} />
 
-        {projects.length === 0 ? (
-          <div style={{ textAlign: 'center', marginTop: '80px', color: '#666' }}>
-            <p style={{ fontSize: "1.1rem" }}>No projects with photos found for your department.</p>
+      <main style={{ flex: 1, padding: isMobile ? "15px" : "40px" }}>
+        <header style={{ marginBottom: "30px", borderBottom: "2px solid #e2e8f0", paddingBottom: "15px" }}>
+          <h1 style={{ fontSize: isMobile ? "20px" : "26px", fontWeight: 800, color: "#1e293b", margin: 0 }}>
+            <FaCamera style={{ marginRight: "12px", color: "#0056b3" }} />
+            Recent Project Photos: <span style={{ color: "#2563eb" }}>{loggedDept}</span>
+          </h1>
+        </header>
+
+        {loading ? (
+          <p style={{ textAlign: "center", color: "#64748b" }}>Loading Media...</p>
+        ) : projects.length === 0 ? (
+          <div style={emptyStateStyle}>
+            <p>Aapke vibhag ke liye abhi tak koi photos upload nahi hui hain.</p>
           </div>
         ) : (
           projects.map((project) => (
-            <div
-              key={project._id}
-              style={{
-                background: "#fff",
-                padding: isMobile ? "15px" : "25px",
-                borderRadius: "12px",
-                marginBottom: "25px",
-                boxShadow: "0 4px 15px rgba(0,0,0,0.05)",
-                border: "1px solid #eee",
-                overflow: "hidden" // Prevents child elements from bleeding out
-              }}
-            >
-              {/* --- 🛠 HANDLED LONG PROJECT NAME --- */}
-              <h2
-                title={project.name} // Full name on hover
-                style={{
-                  fontSize: isMobile ? "18px" : "22px",
-                  fontWeight: 700,
-                  marginBottom: "20px",
-                  color: "#222",
-                  borderLeft: "5px solid #4CAF50",
-                  paddingLeft: "15px",
-                  lineHeight: "1.4",
-                  wordBreak: "break-word",
-                  overflowWrap: "anywhere",
-                  display: "-webkit-box",
-                  WebkitLineClamp: "2", // Limits to 2 lines then adds "..."
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden"
-                }}
-              >
+            <div key={project._id} style={cardStyle}>
+              <h2 title={project.name} style={projectTitleStyle}>
                 {project.name}
               </h2>
 
               <div style={{ 
                 display: "grid", 
-                gridTemplateColumns: isMobile ? "repeat(auto-fill, minmax(100px, 1fr))" : "repeat(auto-fill, 180px)", 
-                gap: isMobile ? "10px" : "18px" 
+                gridTemplateColumns: isMobile ? "repeat(auto-fill, minmax(100px, 1fr))" : "repeat(auto-fill, 160px)", 
+                gap: "15px" 
               }}>
                 {project.photos.map((photo, i) => (
                   <div
                     key={i}
-                    onClick={() =>
-                      setPreview({
-                        images: project.photos.map((p) => p.url),
-                        index: i,
-                        zoom: false,
-                      })
-                    }
-                    style={{
-                      aspectRatio: "1/1",
-                      cursor: "pointer",
-                      borderRadius: "8px",
-                      overflow: "hidden",
-                      border: "2px solid #f0f0f0",
-                      transition: "transform 0.2s ease",
-                    }}
-                    onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.02)"}
-                    onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
+                    onClick={() => setPreview({
+                      images: project.photos.map((p) => p.url),
+                      index: i,
+                      zoom: false,
+                    })}
+                    style={thumbnailStyle}
                   >
-                    <img
-                      src={photo.url}
-                      alt="Project detail"
-                      loading="lazy"
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
-                    />
+                    <img src={photo.url} alt="Project" loading="lazy" style={imgStyle} />
                   </div>
                 ))}
               </div>
-              <p style={{ marginTop: "15px", fontSize: "12px", color: "#888", textAlign: "right" }}>
-                Total Photos: {project.photos.length}
-              </p>
+              <div style={cardFooter}>
+                Total Photos: <strong>{project.photos.length}</strong>
+              </div>
             </div>
           ))
         )}
       </main>
 
-      {/* 🔍 Image Preview Modal */}
+      {/* 🔍 Preview Modal */}
       {preview.images.length > 0 && (
-        <div
-          onClick={closePreview}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.9)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 2000,
-            padding: "10px"
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              position: "relative",
-              width: "100%",
-              maxWidth: "1000px",
-              textAlign: "center",
-            }}
-          >
+        <div onClick={closePreview} style={modalOverlay}>
+          <div onClick={(e) => e.stopPropagation()} style={modalContent}>
             <img
               src={currentImage}
               alt="preview"
               style={{
                 maxWidth: "100%",
-                maxHeight: isMobile ? "65vh" : "80vh",
-                borderRadius: "4px",
-                transform: preview.zoom ? "scale(1.5)" : "scale(1)",
+                maxHeight: isMobile ? "70vh" : "80vh",
+                borderRadius: "8px",
+                transform: preview.zoom ? "scale(1.4)" : "scale(1)",
                 transition: "transform 0.3s ease",
                 cursor: preview.zoom ? "zoom-out" : "zoom-in",
-                boxShadow: "0 5px 25px rgba(0,0,0,0.5)"
+                boxShadow: "0 10px 40px rgba(0,0,0,0.6)"
               }}
               onClick={() => setPreview((p) => ({ ...p, zoom: !p.zoom }))}
             />
 
-            <div style={{ marginTop: "25px", display: "flex", justifyContent: "center", gap: "20px" }}>
-              <button onClick={prevImage} style={controlBtn}>PREV</button>
-              <a href={currentImage} download style={{ ...controlBtn, textDecoration: "none", background: "#0056b3" }}>DOWNLOAD</a>
-              <button onClick={nextImage} style={controlBtn}>NEXT</button>
+            <div style={modalControls}>
+              <button onClick={prevImage} style={controlBtn}><FaChevronLeft /> PREV</button>
+              <a href={currentImage} download style={{ ...controlBtn, background: "#2563eb" }}><FaDownload /> SAVE</a>
+              <button onClick={nextImage} style={controlBtn}>NEXT <FaChevronRight /></button>
             </div>
 
-            <button
-              onClick={closePreview}
-              style={{
-                position: "absolute",
-                top: isMobile ? "-60px" : "-30px",
-                right: "0",
-                background: "#ff4d4f",
-                color: "#fff",
-                border: "none",
-                borderRadius: "50%",
-                width: "40px",
-                height: "40px",
-                cursor: "pointer",
-                fontSize: "20px",
-                fontWeight: "bold",
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                boxShadow: "0 2px 10px rgba(0,0,0,0.3)"
-              }}
-            >
-              ×
-            </button>
+            <button onClick={closePreview} style={closeBtn}><FaTimes /></button>
           </div>
         </div>
       )}
 
-      {/* 🏛 FOOTER */}
-      <footer style={{
-        width: '100%',
-        backgroundColor: '#f8f9fa',
-        borderTop: '3px solid #0056b3',
-        padding: '20px 10px',
-        color: '#333',
-        textAlign: 'center',
-        fontFamily: "serif",
-        marginTop: 'auto'
-      }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <p style={{ margin: '0', fontSize: '0.95rem', fontWeight: 'bold', color: '#002147' }}>
-            District Administration
-          </p>
-          <p style={{ margin: '5px 0', fontSize: '0.8rem', opacity: 0.8 }}>
-            Designed and Developed by <strong>District Administration</strong>
-          </p>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            gap: '15px',
-            fontSize: '0.75rem',
-            borderTop: '1px solid #ddd',
-            marginTop: '12px',
-            paddingTop: '12px'
-          }}>
-            <span>&copy; {new Date().getFullYear()} All Rights Reserved.</span>
-            <span>|</span>
-            <span>Official Departmental Portal</span>
-          </div>
-        </div>
+      {/* FOOTER */}
+      <footer style={footerStyle}>
+        <p style={{ margin: 0, fontWeight: "bold" }}>District Administration Monitoring System</p>
+        <p style={{ fontSize: "11px", opacity: 0.7 }}>&copy; {new Date().getFullYear()} NIC Udham Singh Nagar</p>
       </footer>
     </div>
   );
 }
 
-const controlBtn = {
-  padding: "10px 18px",
-  fontSize: "14px",
-  borderRadius: "6px",
-  border: "none",
-  cursor: "pointer",
-  background: "#4CAF50",
-  color: "#fff",
-  fontWeight: 600,
-  letterSpacing: "0.5px",
-  boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-  transition: "background 0.2s ease"
+// --- Styles ---
+const cardStyle = {
+  background: "#fff",
+  padding: "20px",
+  borderRadius: "12px",
+  marginBottom: "30px",
+  boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
+  border: "1px solid #e2e8f0"
 };
+
+const projectTitleStyle = {
+  fontSize: "18px",
+  fontWeight: 700,
+  marginBottom: "18px",
+  color: "#334155",
+  borderLeft: "5px solid #10b981",
+  paddingLeft: "12px",
+  display: "-webkit-box",
+  WebkitLineClamp: "2",
+  WebkitBoxOrient: "vertical",
+  overflow: "hidden"
+};
+
+const thumbnailStyle = {
+  aspectRatio: "1/1",
+  cursor: "pointer",
+  borderRadius: "8px",
+  overflow: "hidden",
+  border: "2px solid #f1f5f9",
+  transition: "all 0.2s ease"
+};
+
+const imgStyle = { width: "100%", height: "100%", objectFit: "cover" };
+
+const cardFooter = { marginTop: "15px", textAlign: "right", fontSize: "12px", color: "#64748b" };
+
+const modalOverlay = { position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.98)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 2000, padding: "15px" };
+
+const modalContent = { position: "relative", width: "100%", maxWidth: "1000px", textAlign: "center" };
+
+const modalControls = { marginTop: "30px", display: "flex", justifyContent: "center", gap: "15px" };
+
+const controlBtn = { padding: "12px 20px", fontSize: "14px", borderRadius: "8px", border: "none", cursor: "pointer", background: "#334155", color: "#fff", fontWeight: "700", display: "flex", alignItems: "center", gap: "8px" };
+
+const closeBtn = { position: "absolute", top: "-50px", right: "0", background: "#ef4444", color: "#fff", border: "none", borderRadius: "50%", width: "36px", height: "36px", cursor: "pointer", fontSize: "18px", fontWeight: "bold" };
+
+const emptyStateStyle = { textAlign: 'center', marginTop: '100px', padding: '40px', background: '#fff', borderRadius: '15px', color: '#94a3b8' };
+
+const footerStyle = { width: '100%', backgroundColor: '#fff', borderTop: '1px solid #e2e8f0', padding: '20px', color: '#64748b', textAlign: 'center', marginTop: 'auto' };

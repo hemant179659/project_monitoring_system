@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-// ✅ Direct axios ki jagah hamara custom API instance use karein
+// ✅ Custom API instance use karein
 import API from "../api/axios"; 
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -13,7 +13,7 @@ import {
 } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 
-export default function AdminDashboard() {
+export default function DMDashboard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [summaryData, setSummaryData] = useState([]);
@@ -60,22 +60,22 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    // ✅ 1. Check if token exists, if not, redirect to login immediately
+    // ✅ 1. Security Check: Agar token nahi hai toh login pe bhej do
     const token = localStorage.getItem("adminToken");
     if (!token) {
-      navigate("/desto-login", { replace: true });
+      navigate("/admin-login", { replace: true });
       return;
     }
 
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        
-        // 1. District Ka Kul Budget Fetch Karo
+
+        // 1. District Total Budget Fetch
         const districtRes = await API.get("/department/get-district-total");
         const districtTotalVal = districtRes.data.totalJilaBudget || 0;
 
-        // 2. Department Summary Fetch Karo
+        // 2. Department Summary Fetch
         const res = await API.get("/department/budget-summary");
         const data = res.data || [];
 
@@ -84,7 +84,7 @@ export default function AdminDashboard() {
           utilization: dept.totalBudget > 0 ? parseFloat((dept.totalSpent / dept.totalBudget * 100).toFixed(2)) : 0
         }));
 
-        // 3. Calculations
+        // 3. Totals Calculation
         const spentSum = processedData.reduce((acc, curr) => acc + curr.totalSpent, 0);
         const remainingSum = districtTotalVal - spentSum;
 
@@ -96,12 +96,13 @@ export default function AdminDashboard() {
         });
 
       } catch (err) {
-        console.error("Dashboard Error:", err);
-        if (err.response?.status === 401) {
+        console.error("DM Dashboard Error:", err);
+        // ✅ 2. 401/403 Error par session clear karke login bhej do
+        if (err.response?.status === 401 || err.response?.status === 403) {
           localStorage.clear();
-          navigate("/desto-login", { replace: true });
+          navigate("/admin-login", { replace: true });
         } else {
-          toast.error(err.response?.data?.message || "Data load error!");
+          toast.error(err.response?.data?.message || "डेटा लोड करने में समस्या आई!");
         }
       } finally {
         setLoading(false);
@@ -113,7 +114,11 @@ export default function AdminDashboard() {
   const sortedData = [...summaryData].sort((a, b) => b.utilization - a.utilization);
 
   if (loading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontWeight: 'bold' }}>लोड हो रहा है...</div>;
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '20px', fontWeight: 'bold' }}>
+        डेटा लोड हो रहा है...
+      </div>
+    );
   }
 
   return (
@@ -124,20 +129,18 @@ export default function AdminDashboard() {
       <aside style={{ width: '250px', backgroundColor: '#002147', color: '#fff', position: 'sticky', top: 0, height: '100vh' }}>
         <div style={{ padding: '20px', textAlign: 'center', borderBottom: '1px solid #1a3a5a' }}>
           <FaUserCircle size={50} />
-          <h2 style={{ fontSize: '18px', marginTop: '10px' }}>DESTO DASHBOARD</h2>
+          <h2 style={{ fontSize: '18px', marginTop: '10px' }}>ADMINISTRATION DASHBOARD</h2>
         </div>
         <nav style={{ marginTop: '20px' }}>
-          <div style={navLink} onClick={() => navigate("/admin-dashboard")}><FaTachometerAlt /> Dashboard</div>
-          <div style={navLink} onClick={() => navigate("/desto-all-projects")}><FaList /> Project List</div>
+          <div style={navLink} onClick={() => navigate("/dmdashboard")}><FaTachometerAlt /> Dashboard</div>
+          <div style={navLink} onClick={() => navigate("/admin-project-list")}><FaList /> Project List</div>
           <div style={navLink} onClick={() => navigate("/department-status")}><FaChartBar /> Dept Status</div>
-          <div style={navLink} onClick={() => navigate("/budgetallocation")}><FaMoneyBillWave /> Budget Allocation</div>
-          <div style={navLink} onClick={() => navigate("/update-budget")}><FaWallet /> Update Budget</div>
           <div style={navLink} onClick={() => navigate("/projectrecentphotoadmin")}><FaImages /> Photos</div>
           
-          {/* ✅ Fixed Logout with replace: true */}
+          {/* ✅ 3. Logout logic with replace: true */}
           <div style={{ ...navLink, color: '#ff4d4f' }} onClick={() => {
             localStorage.clear(); 
-            navigate("/desto-login", { replace: true }); 
+            navigate("/admin-login", { replace: true }); 
           }}><FaSignOutAlt /> Logout</div>
         </nav>
       </aside>
@@ -151,7 +154,7 @@ export default function AdminDashboard() {
           </button>
         </div>
 
-        {/* --- TOP 3 CARDS --- */}
+        {/* Stats Cards */}
         <div style={{ display: 'flex', gap: '20px', marginBottom: '30px' }}>
           <div style={{ ...statsCard, borderLeft: '10px solid #0056b3' }}>
             <FaMoneyBillWave size={35} color="#0056b3" />
@@ -206,7 +209,7 @@ export default function AdminDashboard() {
                   </td>
                 </tr>
               )) : (
-                <tr><td colSpan="7" style={{textAlign: 'center', padding: '20px'}}>कोई डेटा उपलब्ध नहीं है</td></tr>
+                <tr><td colSpan="7" style={{ textAlign: 'center', padding: '20px' }}>डेटा उपलब्ध नहीं है।</td></tr>
               )}
             </tbody>
           </table>
@@ -244,6 +247,7 @@ export default function AdminDashboard() {
   );
 }
 
+// Global Styles (No changes here, kept as per your design)
 const navLink = { padding: '15px 20px', cursor: 'pointer', borderBottom: '1px solid #1a3a5a', fontWeight: 'bold' };
 const statsCard = { flex: 1, backgroundColor: '#fff', padding: '20px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '15px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' };
 const cardLabel = { margin: 0, fontSize: '12px', fontWeight: 'bold', color: '#666' };

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import API from "../api/axios"; // ✅ Fixed Axios instance
 import styles from "../styles/styles.module.css";
 import BackButton from "./BackButton";
 import backgroundImage from "../assets/login.jpg";
@@ -16,7 +16,8 @@ export default function DepartmentSignup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  
+  const [verificationCode, setVerificationCode] = useState(""); // ✅ Added New Field
+
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   // Handle Responsive Layout
@@ -40,10 +41,9 @@ export default function DepartmentSignup() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, [navigate]);
 
-  // RESTORED SIGNUP LOGIC
+  // RESTORED & UPDATED SIGNUP LOGIC
   const handleSignup = async () => {
-    // 1. Basic Validation
-    if (!deptName || !email || !password || !confirmPassword) {
+    if (!deptName || !email || !password || !confirmPassword || !verificationCode) {
       return toast.error("Please complete all fields");
     }
 
@@ -52,24 +52,21 @@ export default function DepartmentSignup() {
     }
 
     try {
-      // 2. API Call to Backend
-      const response = await axios.post("http://localhost:8000/api/department/signup", {
+      // ✅ API Call using fixed instance
+      const response = await API.post("/department/signup", {
         deptName,
         email,
         password,
-        
+        verificationCode, // ✅ Verification code sent to DB
       });
 
-      // 3. Success Handling
       toast.success(response.data.message || "Account created successfully!");
       
-      // Delay navigation so user can see the success message
       setTimeout(() => {
         navigate("/dept-login");
       }, 2000);
 
     } catch (error) {
-      // 4. Error Handling
       const errorMessage = error.response?.data?.message || "Signup failed. Please try again.";
       toast.error(errorMessage);
     }
@@ -93,7 +90,7 @@ export default function DepartmentSignup() {
         height: isMobile ? 'auto' : '100vh' 
       }}>
         
-        {/* LEFT SECTION */}
+        {/* LEFT SECTION - RESTORED ORIGINAL */}
         <div
           className={styles.leftSection}
           style={{ 
@@ -114,7 +111,7 @@ export default function DepartmentSignup() {
           <BackButton onClick={() => navigate("/dept-login")} />
         </div>
 
-        {/* RIGHT SECTION */}
+        {/* RIGHT SECTION - RESTORED ORIGINAL */}
         <div 
           className={styles.rightSection}
           style={{
@@ -141,7 +138,7 @@ export default function DepartmentSignup() {
               onChange={(e) => setDeptName(e.target.value)}
             >
               <option value="">Select Department</option>
-              {["Agriculture", "PWD", "Forestry", "Horticulture", "Vetenary"].map((dept) => (
+              {["Agriculture", "PWD", "Forestry", "Health", "Vetenary"].map((dept) => (
                 <option key={dept} value={dept}>{dept}</option>
               ))}
             </select>
@@ -153,6 +150,7 @@ export default function DepartmentSignup() {
               value={email} 
               onChange={(e) => setEmail(e.target.value)} 
             />
+            
             <input 
               className={styles.inputField} 
               type="password" 
@@ -160,12 +158,23 @@ export default function DepartmentSignup() {
               value={password} 
               onChange={(e) => setPassword(e.target.value)} 
             />
+            
             <input 
               className={styles.inputField} 
               type="password" 
               placeholder="Confirm Password" 
               value={confirmPassword} 
               onChange={(e) => setConfirmPassword(e.target.value)} 
+            />
+
+            {/* ✅ ADDED VERIFICATION CODE FIELD */}
+            <input 
+              className={styles.inputField} 
+              type="text" 
+              placeholder="Verification Code" 
+              value={verificationCode} 
+              onChange={(e) => setVerificationCode(e.target.value)} 
+              style={{ border: '1px solid #0056b3' }}
             />
 
             <button className={styles.loginBtn} onClick={handleSignup}>Signup</button>
@@ -180,7 +189,7 @@ export default function DepartmentSignup() {
         </div>
       </div>
 
-      {/* FOOTER */}
+      {/* FOOTER - RESTORED ORIGINAL */}
       <footer style={{
         position: isMobile ? 'relative' : 'fixed',
         bottom: 0,
