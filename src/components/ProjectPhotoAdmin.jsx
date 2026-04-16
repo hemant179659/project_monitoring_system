@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-// ✅ Tera Custom API instance
+import { useNavigate, Link } from "react-router-dom";
 import API from "../api/axios"; 
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { FaBuilding, FaImages, FaArrowLeft, FaDownload, FaTimes, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaBuilding, FaImages, FaArrowLeft, FaDownload, FaTimes, FaChevronLeft, FaChevronRight, FaRegIdBadge } from "react-icons/fa";
 
 export default function ProjectPhotoAdmin() {
   const navigate = useNavigate();
@@ -16,26 +15,24 @@ export default function ProjectPhotoAdmin() {
     zoom: false,
   });
 
-  // ✅ 1. Admin Protection Logic
+  // ✅ Auth Protection
   useEffect(() => {
     const isAdmin = localStorage.getItem("isAdmin");
-    const token = localStorage.getItem("adminToken");
+    const token = localStorage.getItem("destoToken") || localStorage.getItem("adminToken");
     if (!isAdmin || !token) {
       toast.error("Access Denied! Please login as Admin.");
       navigate("/desto-login", { replace: true });
     }
   }, [navigate]);
 
-  // ✅ 2. Load all projects using Custom API Instance
+  // ✅ Load Data
   useEffect(() => {
     const loadAllProjects = async () => {
       setLoading(true);
       try {
-        // Query param 'all=true' ke saath fetch kar rahe hain
         const res = await API.get("/department/projects?all=true");
         const projects = res.data.projects || [];
 
-        // Grouping projects by department (Sirf wahi jinme photos hain)
         const grouped = projects.reduce((acc, p) => {
           if (p.photos && p.photos.length > 0) {
             if (!acc[p.department]) acc[p.department] = [];
@@ -46,75 +43,60 @@ export default function ProjectPhotoAdmin() {
 
         setDeptProjects(grouped);
       } catch (err) {
-        console.error("Gallery Load Error:", err);
-        if (err.response?.status !== 401) {
-          toast.error("Photos load karne mein dikkat aayi.");
-        }
+        if (err.response?.status !== 401) toast.error("Error loading photos.");
       } finally {
         setLoading(false);
       }
     };
-
     loadAllProjects();
   }, []);
 
-  // 🔍 Preview Handlers
-  const nextImage = () =>
-    setPreview((p) => ({
-      ...p,
-      index: (p.index + 1) % p.images.length,
-      zoom: false,
-    }));
-
-  const prevImage = () =>
-    setPreview((p) => ({
-      ...p,
-      index: (p.index - 1 + p.images.length) % p.images.length,
-      zoom: false,
-    }));
-
+  const nextImage = () => setPreview(p => ({ ...p, index: (p.index + 1) % p.images.length, zoom: false }));
+  const prevImage = () => setPreview(p => ({ ...p, index: (p.index - 1 + p.images.length) % p.images.length, zoom: false }));
   const closePreview = () => setPreview({ images: [], index: 0, zoom: false });
 
-  const currentImage = preview.images[preview.index];
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: "#f8fafc" }}>
-      <ToastContainer position="top-center" autoClose={2000} />
+    <div style={pageWrapper}>
+      <ToastContainer position="top-right" autoClose={2000} />
 
-      {/* HEADER SECTION */}
+      {/* --- HEADER --- */}
       <header style={headerBox}>
-        <button onClick={() => navigate(-1)} style={backBtnStyle}>
-          <FaArrowLeft /> Back
-        </button>
-        <h1 style={{ fontSize: "24px", fontWeight: 800, color: "#1e293b", margin: 0 }}>
-          <FaImages style={{ marginRight: '12px', color: '#0056b3' }} /> 
-          District Project Gallery
-        </h1>
-        <div style={{ width: '80px' }}></div> {/* Spacer for alignment */}
+        <div style={headerContainer}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <button onClick={() => navigate(-1)} style={backBtnStyle} title="Go Back">
+              <FaArrowLeft />
+            </button>
+            <div>
+              <h1 style={headerTitle}>District Project Gallery</h1>
+              <p style={headerSubtitle}>Visual Progress Monitoring - All Departments</p>
+            </div>
+          </div>
+          <FaImages size={30} color="#21618c" style={{ opacity: 0.8 }} />
+        </div>
       </header>
 
-      <main style={{ flex: 1, padding: "20px 40px" }}>
+      {/* --- MAIN CONTENT --- */}
+      <main style={mainContent}>
         {loading ? (
-          <div style={{ textAlign: "center", marginTop: "100px", color: "#64748b" }}>Loading Project Media...</div>
+          <div style={loaderStyle}>Fetching visual records...</div>
         ) : Object.keys(deptProjects).length === 0 ? (
-          <div style={{ textAlign: "center", marginTop: "100px", background: '#fff', padding: '50px', borderRadius: '15px' }}>
-             <p style={{ color: "#94a3b8", fontSize: "18px", fontWeight: '600' }}>No recent photos uploaded yet.</p>
-          </div>
+          <div style={emptyState}>No media uploads found in the system.</div>
         ) : (
           Object.keys(deptProjects).map((dept, idx) => (
-            <div key={idx} style={{ marginBottom: "50px" }}>
-              <h2 style={deptTitleStyle}>
-                <FaBuilding style={{ marginRight: '10px' }} /> {dept} Department
-              </h2>
+            <section key={idx} style={{ marginBottom: "60px" }}>
+              <div style={deptHeader}>
+                <FaBuilding size={18} />
+                <span>{dept} Department</span>
+              </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "25px" }}>
+              <div style={gridSystem}>
                 {deptProjects[dept].map((project) => (
-                  <div key={project._id} style={projectCardStyle}>
-                    <h3 title={project.name} style={projectNameStyle}>
-                      {project.name}
-                    </h3>
+                  <div key={project._id} style={projectCard}>
+                    <div style={cardHeader}>
+                       <h3 style={projectTitle}>{project.name}</h3>
+                    </div>
 
-                    <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", flex: 1 }}>
+                    <div style={photoGrid}>
                       {project.photos.map((photo, i) => (
                         <div
                           key={i}
@@ -123,62 +105,72 @@ export default function ProjectPhotoAdmin() {
                             index: i,
                             zoom: false,
                           })}
-                          style={thumbnailWrapper}
+                          style={thumbnailBox}
                         >
-                          <img
-                            src={photo.url}
-                            alt="project"
-                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                          />
+                          <img src={photo.url} alt="project" style={imgFit} />
                         </div>
                       ))}
                     </div>
+
                     <div style={cardFooter}>
-                       <span>{project.photos.length} Photo(s)</span>
-                       <span>ID: {project._id.slice(-6).toUpperCase()}</span>
+                       <div style={footerTag}><FaImages /> {project.photos.length} Files</div>
+                       <div style={footerTag}><FaRegIdBadge /> {project._id.slice(-6).toUpperCase()}</div>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
           ))
         )}
       </main>
 
-      {/* FOOTER */}
+      {/* ================= UPDATED PROFESSIONAL FOOTER ================= */}
       <footer style={footerStyle}>
-          <p style={{ margin: '0', fontSize: '0.85rem', fontWeight: '700' }}>NIC Udham Singh Nagar - District Administration</p>
-          <p style={{ margin: '4px 0', fontSize: '0.7rem', opacity: 0.7 }}>&copy; {new Date().getFullYear()} Official Monitoring Portal</p>
+        <div style={footerContainer}>
+          <div style={footerBrand}>
+            <strong>DISTRICT ADMINISTRATION, UTTARAKHAND</strong>
+          </div>
+          
+          <nav style={footerLinksWrapper}>
+            <Link to="/privacy-policy" style={fLink}>Privacy Policy</Link>
+            <span style={fSep}>|</span>
+            <Link to="/terms-conditions" style={fLink}>Terms & Conditions</Link>
+            <span style={fSep}>|</span>
+            <Link to="/accessibility" style={fLink}>Accessibility</Link>
+            <span style={fSep}>|</span>
+            <Link to="/contact" style={fLink}>Contact Us</Link>
+          </nav>
+          
+          <p style={copyright}>
+            © {new Date().getFullYear()} Designed & Developed by District Administration
+          </p>
+        </div>
       </footer>
 
-      {/* 🔍 Image Preview Modal */}
+      {/* --- LIGHTBOX MODAL --- */}
       {preview.images.length > 0 && (
         <div onClick={closePreview} style={modalOverlay}>
           <div onClick={(e) => e.stopPropagation()} style={modalContent}>
             <img
-              src={currentImage}
+              src={preview.images[preview.index]}
               alt="preview"
               style={{
-                maxWidth: "100%",
-                maxHeight: "75vh",
-                borderRadius: "8px",
+                ...previewImg,
                 transform: preview.zoom ? "scale(1.4)" : "scale(1)",
-                transition: "transform 0.3s ease",
                 cursor: preview.zoom ? "zoom-out" : "zoom-in",
-                boxShadow: "0 0 40px rgba(0,0,0,0.5)"
               }}
               onClick={() => setPreview((p) => ({ ...p, zoom: !p.zoom }))}
             />
 
-            <div style={{ marginTop: "30px", display: "flex", justifyContent: "center", gap: "15px" }}>
+            <div style={modalControls}>
               <button onClick={prevImage} style={controlBtn}><FaChevronLeft /> PREV</button>
-              <a href={currentImage} download style={{ ...controlBtn, background: "#16a34a" }}><FaDownload /> DOWNLOAD</a>
+              <a href={preview.images[preview.index]} download style={{ ...controlBtn, background: "#16a34a" }}>
+                <FaDownload /> DOWNLOAD
+              </a>
               <button onClick={nextImage} style={controlBtn}>NEXT <FaChevronRight /></button>
             </div>
 
-            <button onClick={closePreview} style={closeBtn}>
-              <FaTimes /> Close
-            </button>
+            <button onClick={closePreview} style={closeBtn}><FaTimes /> Close Preview</button>
           </div>
         </div>
       )}
@@ -186,16 +178,48 @@ export default function ProjectPhotoAdmin() {
   );
 }
 
-// --- Dynamic Styles ---
-const headerBox = { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 40px", background: "#fff", borderBottom: "1px solid #e2e8f0", position: "sticky", top: 0, zIndex: 10 };
-const backBtnStyle = { display: "flex", alignItems: "center", gap: "8px", background: "#f1f5f9", border: "1px solid #cbd5e1", padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontWeight: "700", color: "#475569" };
-const deptTitleStyle = { fontSize: "20px", fontWeight: 800, marginBottom: "20px", color: "#0f172a", borderLeft: "5px solid #0056b3", padding: "10px 18px", backgroundColor: "#fff", borderRadius: "0 8px 8px 0", boxShadow: "0 2px 4px rgba(0,0,0,0.04)" };
-const projectCardStyle = { background: "#fff", padding: "20px", borderRadius: "12px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", border: "1px solid #e2e8f0", display: 'flex', flexDirection: 'column' };
-const projectNameStyle = { fontSize: "16px", fontWeight: 700, marginBottom: "15px", color: "#334155", lineHeight: "1.4", display: "-webkit-box", WebkitLineClamp: "2", WebkitBoxOrient: "vertical", overflow: "hidden", minHeight: "45px" };
-const thumbnailWrapper = { width: "85px", height: "85px", cursor: "pointer", borderRadius: "8px", overflow: "hidden", transition: "all 0.2s", border: "2px solid #f1f5f9", ":hover": { transform: "translateY(-3px)", borderColor: "#0056b3" } };
-const cardFooter = { marginTop: "15px", paddingTop: "10px", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", fontSize: "11px", color: "#94a3b8", fontWeight: "600" };
-const footerStyle = { width: '100%', backgroundColor: '#fff', borderTop: '1px solid #e2e8f0', padding: '20px', color: '#64748b', textAlign: 'center', marginTop: 'auto' };
-const modalOverlay = { position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.95)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 };
-const modalContent = { position: "relative", maxWidth: "90%", textAlign: "center" };
-const controlBtn = { display: "flex", alignItems: "center", gap: "8px", padding: "12px 24px", fontSize: "14px", borderRadius: "8px", border: "none", cursor: "pointer", background: "#334155", color: "#fff", fontWeight: "700" };
-const closeBtn = { position: "absolute", top: "-50px", right: "0", background: "rgba(255,255,255,0.1)", color: "#fff", border: "1px solid rgba(255,255,255,0.3)", borderRadius: "6px", padding: "6px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" };
+// --- Styles ---
+const pageWrapper = { minHeight: "100vh", display: "flex", flexDirection: "column", backgroundColor: "#f1f5f9" };
+
+const headerBox = { backgroundColor: "#fff", padding: "15px 0", borderBottom: "1px solid #e2e8f0", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 4px rgba(0,0,0,0.02)" };
+const headerContainer = { width: "95%", maxWidth: "1300px", margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" };
+const headerTitle = { margin: 0, fontSize: "1.5rem", fontWeight: "800", color: "#0f172a" };
+const headerSubtitle = { margin: 0, fontSize: "0.85rem", color: "#64748b", fontWeight: "600" };
+
+const backBtnStyle = { background: "#f8fafc", border: "1px solid #e2e8f0", padding: "10px", borderRadius: "10px", cursor: "pointer", color: "#475569", display: "flex", alignItems: "center" };
+
+const mainContent = { flex: 1, width: "95%", maxWidth: "1300px", margin: "40px auto", paddingBottom: "40px" };
+const loaderStyle = { textAlign: "center", padding: "100px", color: "#64748b", fontSize: "1.1rem", fontWeight: "600" };
+const emptyState = { textAlign: "center", padding: "80px", background: "#fff", borderRadius: "20px", color: "#94a3b8", fontWeight: "600", border: "2px dashed #cbd5e1" };
+
+const deptHeader = { display: "flex", alignItems: "center", gap: "10px", marginBottom: "25px", fontSize: "1.2rem", fontWeight: "800", color: "#1e293b", background: "#fff", padding: "12px 20px", borderRadius: "12px", width: "fit-content", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", borderLeft: "5px solid #21618c" };
+
+const gridSystem = { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", gap: "25px" };
+
+const projectCard = { background: "#fff", borderRadius: "16px", border: "1px solid #e2e8f0", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)" };
+const cardHeader = { padding: "18px 20px", borderBottom: "1px solid #f1f5f9" };
+const projectTitle = { margin: 0, fontSize: "1rem", fontWeight: "700", color: "#334155", lineHeight: "1.5" };
+
+const photoGrid = { padding: "15px 20px", display: "flex", gap: "10px", flexWrap: "wrap", flex: 1, backgroundColor: "#f8fafc" };
+const thumbnailBox = { width: "75px", height: "75px", borderRadius: "10px", overflow: "hidden", cursor: "pointer", border: "2px solid #fff", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" };
+const imgFit = { width: "100%", height: "100%", objectFit: "cover" };
+
+const cardFooter = { padding: "12px 20px", background: "#fff", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between" };
+const footerTag = { fontSize: "11px", fontWeight: "700", color: "#94a3b8", display: "flex", alignItems: "center", gap: "5px" };
+
+/* ================= PROFESSIONAL FOOTER STYLES ================= */
+const footerStyle = { backgroundColor: "#ffffff", padding: "25px 0", borderTop: "5px solid #21618c", width: '100%', marginTop: 'auto' };
+const footerContainer = { width: "90%", maxWidth: "600px", margin: "0 auto", textAlign: "center" };
+const footerBrand = { fontSize: "0.9rem", fontWeight: "800", color: "#1e293b", marginBottom: "12px" };
+const footerLinksWrapper = { display: "flex", justifyContent: "center", alignItems: "center", gap: "15px", marginBottom: "12px", flexWrap: "wrap" };
+const fLink = { color: "#21618c", textDecoration: "none", fontWeight: "700", fontSize: "0.8rem" };
+const fSep = { color: "#cbd5e1", fontSize: "0.8rem" };
+const copyright = { fontSize: "0.75rem", color: "#64748b", margin: 0, borderTop: "1px solid #f1f5f9", paddingTop: "12px" };
+
+// --- Lightbox Styles ---
+const modalOverlay = { position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.98)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000, backdropFilter: "blur(10px)" };
+const modalContent = { position: "relative", maxWidth: "90%", display: 'flex', flexDirection: 'column', alignItems: 'center' };
+const previewImg = { maxHeight: "75vh", borderRadius: "12px", boxShadow: "0 20px 50px rgba(0,0,0,0.5)", transition: "0.3s ease" };
+const modalControls = { marginTop: "30px", display: "flex", gap: "15px" };
+const controlBtn = { padding: "12px 24px", fontSize: "14px", borderRadius: "12px", border: "none", cursor: "pointer", background: "#334155", color: "#fff", fontWeight: "700", display: "flex", alignItems: "center", gap: "8px" };
+const closeBtn = { position: "absolute", top: "-60px", right: "0", background: "rgba(255,255,255,0.1)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "10px", padding: "8px 16px", cursor: "pointer", fontWeight: "600" };

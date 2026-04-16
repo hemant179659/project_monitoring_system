@@ -12,7 +12,7 @@ import Verification from "./components/verification";
 import AdminDashboard from "./components/AdminDashboard";
 import DepartmentStatus from "./components/DepartmentStatus";
 import AdminProjectList from "./components/AdminProjectList";
-import DestoAllProjectList from "./components/DestoAllProjectList";
+import DestoAllProjectList from "./components/destoallprojectlist";
 import Completed from "./components/Completed";
 import Pending from "./components/Pending";
 

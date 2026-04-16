@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import API from "../api/axios"; // ✅ Fixed Axios instance
+import { useNavigate, Link } from "react-router-dom"; // Link add kiya gaya
+import API from "../api/axios"; 
 import styles from "../styles/styles.module.css";
 import BackButton from "./BackButton";
 import backgroundImage from "../assets/login.jpg";
@@ -16,9 +16,9 @@ export default function DepartmentSignup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [verificationCode, setVerificationCode] = useState(""); // ✅ Added New Field
-
+  const [verificationCode, setVerificationCode] = useState(""); 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [lang, setLang] = useState("en"); // Language state for footer
 
   // Handle Responsive Layout
   useEffect(() => {
@@ -41,7 +41,6 @@ export default function DepartmentSignup() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, [navigate]);
 
-  // RESTORED & UPDATED SIGNUP LOGIC
   const handleSignup = async () => {
     if (!deptName || !email || !password || !confirmPassword || !verificationCode) {
       return toast.error("Please complete all fields");
@@ -52,12 +51,11 @@ export default function DepartmentSignup() {
     }
 
     try {
-      // ✅ API Call using fixed instance
       const response = await API.post("/department/signup", {
         deptName,
         email,
         password,
-        verificationCode, // ✅ Verification code sent to DB
+        verificationCode,
       });
 
       toast.success(response.data.message || "Account created successfully!");
@@ -73,62 +71,45 @@ export default function DepartmentSignup() {
   };
 
   return (
-    <div style={{ 
-      position: 'relative', 
-      minHeight: '100vh', 
-      width: '100%', 
-      display: 'flex', 
-      flexDirection: 'column', 
-      overflowX: 'hidden' 
-    }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#fff' }}>
       <ToastContainer position="top-right" autoClose={2000} />
 
-      <div className={styles.loginPage} style={{ 
-        flex: 1, 
-        display: 'flex', 
-        flexDirection: isMobile ? 'column' : 'row',
-        height: isMobile ? 'auto' : '100vh' 
-      }}>
+      {/* MAIN CONTENT AREA */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: isMobile ? 'column' : 'row' }}>
         
-        {/* LEFT SECTION - RESTORED ORIGINAL */}
+        {/* LEFT SECTION */}
         <div
-          className={styles.leftSection}
           style={{ 
+            flex: isMobile ? 'none' : '1',
             backgroundImage: `url(${backgroundImage})`,
-            backgroundSize: isMobile ? 'cover' : '115%',
+            backgroundSize: 'contain',
             backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'center 20%',
+            backgroundPosition: 'center',
             backgroundColor: '#ffffff',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'flex-start',
-            paddingTop: '20px',
-            height: isMobile ? '200px' : 'calc(100vh - 50px)',
-            width: isMobile ? '100%' : '50%',
+            height: isMobile ? '200px' : 'auto',
+            position: 'relative',
             borderRight: isMobile ? 'none' : '1px solid #eee'
           }}
         >
-          <BackButton onClick={() => navigate("/dept-login")} />
+          <div style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 999 }}>
+            <BackButton onClick={() => navigate("/dept-login")} />
+          </div>
         </div>
 
-        {/* RIGHT SECTION - RESTORED ORIGINAL */}
+        {/* RIGHT SECTION */}
         <div 
-          className={styles.rightSection}
           style={{
-            flex: 1,
+            flex: isMobile ? 'none' : '1',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'flex-start',
+            justifyContent: 'center',
             alignItems: 'center',
-            height: isMobile ? 'auto' : 'calc(100vh - 50px)',
-            overflowY: isMobile ? 'visible' : 'auto',
-            paddingTop: isMobile ? '20px' : '40px',
-            paddingBottom: isMobile ? '100px' : '120px', 
-            width: isMobile ? '100%' : '50%'
+            backgroundColor: '#000b1a', // Theme matching login screens
+            padding: '40px 20px'
           }}
         >
           <div className={styles.loginBox} style={{ width: '90%', maxWidth: '400px' }}>
-            <h2 style={{ fontSize: '1.4rem', marginBottom: '20px', textAlign: 'center' }}>
+            <h2 style={{ fontSize: '1.4rem', marginBottom: '20px', textAlign: 'center', color: '#fff' }}>
               Department Signup
             </h2>
 
@@ -136,9 +117,44 @@ export default function DepartmentSignup() {
               className={styles.inputField} 
               value={deptName} 
               onChange={(e) => setDeptName(e.target.value)}
+              style={{ width: '100%', padding: '12px', marginBottom: '15px', borderRadius: '5px' }}
             >
               <option value="">Select Department</option>
-              {["Agriculture", "PWD", "Forestry", "Health", "Vetenary"].map((dept) => (
+              {["District Industry Centre",
+  "District Horticulture Office",
+  "Chief Agriculture Office",
+  "Agriculture Soil Conservation Office (Rudrapur)",
+  "Agriculture Soil Conservation Office (Kashipur)",
+  "Minor Irrigation Department",
+  "District Development Office",
+  "District Panchayati Raj Office",
+  "Youth Welfare PRD Department",
+  "Chief Veterinary Office",
+  "Dairy Development Department",
+  "Cooperative Societies Office",
+  "District Sports Office",
+  "Cane Commissioner Office",
+  "Chief Medical Office",
+  "Ayurvedic Yunani Office",
+  "Homeopathy Medical Office",
+  "Economic Statistics Office",
+  "District Programme Office",
+  "District Probation Office",
+  "District Magistrate (Grants)",
+  "District Magistrate Office",
+  "PWD (PD) Rudrapur",
+  "PWD (CD) Kashipur",
+  "PWD (CD) Khatima",
+  "Fisheries Department",
+  "District Education Office",
+  "Elementary Education Office",
+  "District Employment Office",
+  "District Social Welfare Office",
+  "District Information Office",
+  "Irrigation Division (Rudrapur)",
+  "Irrigation Division (Kashipur)",
+  "Irrigation Division (Sitarganj)",
+  "Tubewell Division (Bazpur)"].map((dept) => (
                 <option key={dept} value={dept}>{dept}</option>
               ))}
             </select>
@@ -149,6 +165,7 @@ export default function DepartmentSignup() {
               placeholder="Email" 
               value={email} 
               onChange={(e) => setEmail(e.target.value)} 
+              style={{ width: '100%', padding: '12px', marginBottom: '15px', borderRadius: '5px' }}
             />
             
             <input 
@@ -157,6 +174,7 @@ export default function DepartmentSignup() {
               placeholder="Password" 
               value={password} 
               onChange={(e) => setPassword(e.target.value)} 
+              style={{ width: '100%', padding: '12px', marginBottom: '15px', borderRadius: '5px' }}
             />
             
             <input 
@@ -165,22 +183,22 @@ export default function DepartmentSignup() {
               placeholder="Confirm Password" 
               value={confirmPassword} 
               onChange={(e) => setConfirmPassword(e.target.value)} 
+              style={{ width: '100%', padding: '12px', marginBottom: '15px', borderRadius: '5px' }}
             />
 
-            {/* ✅ ADDED VERIFICATION CODE FIELD */}
             <input 
               className={styles.inputField} 
               type="text" 
               placeholder="Verification Code" 
               value={verificationCode} 
               onChange={(e) => setVerificationCode(e.target.value)} 
-              style={{ border: '1px solid #0056b3' }}
+              style={{ width: '100%', padding: '12px', marginBottom: '20px', borderRadius: '5px', border: '1px solid #0056b3' }}
             />
 
-            <button className={styles.loginBtn} onClick={handleSignup}>Signup</button>
+            <button className={styles.loginBtn} onClick={handleSignup} style={{ width: '100%', fontWeight: 'bold' }}>Signup</button>
             <button 
               className={styles.loginBtn} 
-              style={{ marginTop: '10px', backgroundColor: '#6c757d' }} 
+              style={{ width: '100%', marginTop: '10px', backgroundColor: '#6c757d', fontWeight: 'bold' }} 
               onClick={() => navigate("/dept-login")}
             >
               Back to Login
@@ -189,43 +207,79 @@ export default function DepartmentSignup() {
         </div>
       </div>
 
-      {/* FOOTER - RESTORED ORIGINAL */}
-      <footer style={{
-        position: isMobile ? 'relative' : 'fixed',
-        bottom: 0,
-        left: 0,
-        width: '100%',
-        backgroundColor: '#f8f9fa',
-        borderTop: '3px solid #0056b3',
-        padding: '8px 10px',
-        color: '#333',
-        textAlign: 'center',
-        zIndex: 1000,
-        fontFamily: "serif",
-        boxShadow: '0 -2px 10px rgba(0,0,0,0.1)'
-      }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <p style={{ margin: '0', fontSize: '0.8rem', fontWeight: 'bold', color: '#002147' }}>
-            District Administration
-          </p>
-          <p style={{ margin: '2px 0', fontSize: '0.65rem', opacity: 0.8 }}>
-            Designed and Developed by <strong>District Administration</strong>
-          </p>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            gap: '8px',
-            fontSize: '0.6rem',
-            borderTop: '1px solid #ddd',
-            marginTop: '4px',
-            paddingTop: '4px'
-          }}>
-            <span>&copy; {new Date().getFullYear()} All Rights Reserved.</span>
-            <span>|</span>
-            <span>Official Digital Portal</span>
+      {/* ================= BALANCED FOOTER ================= */}
+      <footer style={footerStyle}>
+        <div style={footerContainer}>
+          <div style={footerBrand}>
+            <strong>{lang === "hi" ? "जिला प्रशासन, उत्तराखंड" : "DISTRICT ADMINISTRATION, UTTARAKHAND"}</strong>
           </div>
+          
+          <nav style={footerLinks}>
+            <Link to="/privacy" style={fLink}>Privacy Policy</Link>
+            <span style={fSep}>|</span>
+            <Link to="/terms" style={fLink}>Terms & Conditions</Link>
+            <span style={fSep}>|</span>
+            <Link to="/accessibility" style={fLink}>Accessibility</Link>
+            <span style={fSep}>|</span>
+            <Link to="/contact" style={fLink}>Contact Us</Link>
+          </nav>
+          
+          <p style={copyright}>
+            © {new Date().getFullYear()} Designed & Developed by District Administration
+          </p>
         </div>
       </footer>
     </div>
   );
 }
+
+/* ===================== FOOTER STYLES ===================== */
+const footerStyle = {
+  position: "relative",
+  zIndex: 1,
+  backgroundColor: "#ffffff",
+  padding: "15px 0",
+  borderTop: "5px solid #21618c",
+};
+
+const footerContainer = {
+  width: "90%",
+  maxWidth: "550px",
+  margin: "0 auto",
+  textAlign: "center",
+};
+
+const footerBrand = {
+  fontSize: "0.85rem",
+  fontWeight: "700",
+  color: "#333",
+  marginBottom: "8px",
+};
+
+const footerLinks = {
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  gap: "12px",
+  marginBottom: "8px",
+};
+
+const fLink = {
+  color: "#21618c",
+  textDecoration: "none",
+  fontWeight: "600",
+  fontSize: "0.75rem",
+};
+
+const fSep = {
+  color: "#ddd",
+  fontSize: "0.75rem"
+};
+
+const copyright = {
+  fontSize: "0.7rem",
+  color: "#666",
+  margin: 0,
+  borderTop: "1px solid #f0f0f0",
+  paddingTop: "8px"
+};

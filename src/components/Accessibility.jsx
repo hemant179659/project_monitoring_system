@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 
 export default function Accessibility() {
-  const [lang, setLang] = useState("hi"); // hi | en
+  const [lang, setLang] = useState("en"); // Default consistent with your other pages
 
   return (
     <div style={pageWrapper} lang={lang}>
@@ -13,27 +13,20 @@ export default function Accessibility() {
 
       {/* ================= LANGUAGE TOGGLE ================= */}
       <div style={langToggle}>
-        <button onClick={() => setLang("hi")} style={langBtn(lang === "hi")}>
-          हिंदी
-        </button>
-        <button onClick={() => setLang("en")} style={langBtn(lang === "en")}>
-          English
-        </button>
+        <button onClick={() => setLang("hi")} style={langBtn(lang === "hi")}>हिन्दी</button>
+        <button onClick={() => setLang("en")} style={langBtn(lang === "en")}>English</button>
       </div>
 
       {/* ================= HEADER ================= */}
       <header style={headerStyle} role="banner">
         <h1 style={siteTitle}>
-          {lang === "hi" ? "तहसील दिवस" : "Tehsil Diwas"}
+          {lang === "hi" ? "जिला योजना निगरानी प्रणाली" : "District Plan Monitoring System"}
         </h1>
-        <p style={siteSubtitle}>
-          {lang === "hi"
-            ? "शिकायत निवारण पोर्टल"
-            : "Grievance Redressal Portal"}
-        </p>
+        <div style={accentLine}></div>
+        <p style={locationText}>DISTRICT ADMINISTRATION, UTTARAKHAND</p>
       </header>
 
-      {/* ================= MAIN ================= */}
+      {/* ================= MAIN CONTENT ================= */}
       <main id="main-content" style={contentStyle} role="main">
         <h2 style={pageHeading}>
           {lang === "hi"
@@ -44,18 +37,10 @@ export default function Accessibility() {
         {lang === "hi" ? (
           <>
             <p>
-              तहसील दिवस – शिकायत निवारण पोर्टल का उद्देश्य यह सुनिश्चित
-              करना है कि यह वेबसाइट सभी उपयोगकर्ताओं के लिए सुलभ हो,
-              जिनमें दिव्यांगजन भी शामिल हैं।
+              जिला योजना निगरानी प्रणाली का उद्देश्य यह सुनिश्चित करना है कि यह वेबसाइट सभी उपयोगकर्ताओं के लिए सुलभ हो, जिसमें दिव्यांगजन भी शामिल हैं।
             </p>
-
             <h3>मानक अनुपालन</h3>
-            <p>
-              यह पोर्टल <strong>WCAG 2.1 Level AA</strong> एवं
-              <strong> GIGW 3.0</strong> दिशानिर्देशों के अनुरूप विकसित
-              किया गया है।
-            </p>
-
+            <p>यह पोर्टल <strong>WCAG 2.1 Level AA</strong> एवं <strong> GIGW 3.0</strong> दिशानिर्देशों के अनुरूप विकसित किया गया है।</p>
             <h3>सुलभता सुविधाएँ</h3>
             <ul>
               <li>कीबोर्ड द्वारा पूर्ण नेविगेशन</li>
@@ -64,27 +49,14 @@ export default function Accessibility() {
               <li>Responsive एवं मोबाइल फ्रेंडली डिज़ाइन</li>
               <li>स्पष्ट हेडिंग संरचना</li>
             </ul>
-
-            <h3>प्रतिक्रिया</h3>
-            <p>
-              यदि वेबसाइट के उपयोग में किसी प्रकार की कठिनाई हो, तो
-              उपयोगकर्ता जिला प्रशासन, उत्तराखंड से संपर्क कर सकते हैं।
-            </p>
           </>
         ) : (
           <>
             <p>
-              The objective of the Tehsil Diwas – Grievance Redressal Portal
-              is to ensure that the website is accessible to all users,
-              including persons with disabilities.
+              The objective of the District Plan Monitoring System is to ensure that the website is accessible to all users, including persons with disabilities.
             </p>
-
             <h3>Standards Compliance</h3>
-            <p>
-              This portal follows <strong>WCAG 2.1 Level AA</strong> and
-              <strong> GIGW 3.0</strong> guidelines.
-            </p>
-
+            <p>This portal follows <strong>WCAG 2.1 Level AA</strong> and <strong> GIGW 3.0</strong> guidelines.</p>
             <h3>Accessibility Features</h3>
             <ul>
               <li>Complete keyboard navigation</li>
@@ -93,42 +65,31 @@ export default function Accessibility() {
               <li>Responsive and mobile-friendly design</li>
               <li>Clear heading hierarchy</li>
             </ul>
-
-            <h3>Feedback</h3>
-            <p>
-              If you face any difficulty in accessing the content of this
-              website, please contact the District Administration,
-              Uttarakhand.
-            </p>
           </>
         )}
-
-        <p style={authorityText}>
-          {lang === "hi"
-            ? "जिला प्रशासन, उत्तराखंड"
-            : "District Administration, Uttarakhand"}
-        </p>
       </main>
 
-      {/* ================= FOOTER ================= */}
-      <footer style={footerStyle} role="contentinfo">
-        <p style={{ margin: 0, fontWeight: 700 }}>
-          {lang === "hi"
-            ? "जिला प्रशासन, उत्तराखंड"
-            : "District Administration, Uttarakhand"}
-        </p>
-        <p style={{ margin: "4px 0", fontSize: "0.8rem" }}>
-          Designed & Developed by District Administration
-        </p>
-
-        <nav aria-label="Footer Navigation">
-          <ul style={footerLinks}>
-            <li><Link to="/privacy-policy">Privacy Policy</Link></li>
-            <li><Link to="/terms">Terms & Conditions</Link></li>
-            <li><Link to="/accessibility">Accessibility</Link></li>
-            <li><Link to="/contact">Contact Us</Link></li>
-          </ul>
-        </nav>
+      {/* ================= BALANCED FOOTER (As requested) ================= */}
+      <footer style={footerStyle}>
+        <div style={footerContainer}>
+          <div style={footerBrand}>
+            <strong>{lang === "hi" ? "जिला प्रशासन, उत्तराखंड" : "DISTRICT ADMINISTRATION, UTTARAKHAND"}</strong>
+          </div>
+          
+          <nav style={footerLinksWrapper}>
+            <Link to="/privacy" style={fLink}>Privacy Policy</Link>
+            <span style={fSep}>|</span>
+            <Link to="/terms" style={fLink}>Terms & Conditions</Link>
+            <span style={fSep}>|</span>
+            <Link to="/accessibility" style={fLink}>Accessibility</Link>
+            <span style={fSep}>|</span>
+            <Link to="/contact" style={fLink}>Contact Us</Link>
+          </nav>
+          
+          <p style={copyright}>
+            © {new Date().getFullYear()} Designed & Developed by District Administration
+          </p>
+        </div>
       </footer>
     </div>
   );
@@ -141,7 +102,7 @@ const pageWrapper = {
   display: "flex",
   flexDirection: "column",
   backgroundColor: "#ffffff",
-  position: "relative",
+  fontFamily: "'Open Sans', Arial, sans-serif",
 };
 
 const skipLink = {
@@ -157,72 +118,116 @@ const skipLink = {
 
 const langToggle = {
   position: "absolute",
-  top: "10px",
-  right: "10px",
+  top: "15px",
+  right: "15px",
+  zIndex: 10,
   display: "flex",
-  gap: "6px",
+  border: "1px solid #21618c",
+  borderRadius: "3px",
+  overflow: "hidden"
 };
 
 const langBtn = (active) => ({
-  padding: "6px 10px",
-  border: "1px solid #000",
-  backgroundColor: active ? "#000" : "#fff",
-  color: active ? "#fff" : "#000",
+  padding: "5px 12px",
+  backgroundColor: active ? "#21618c" : "transparent",
+  color: active ? "#fff" : "#21618c",
+  border: "none",
   cursor: "pointer",
-  fontWeight: 600,
+  fontSize: "0.75rem",
+  fontWeight: "bold",
 });
 
 const headerStyle = {
   textAlign: "center",
-  padding: "28px 16px",
-  borderBottom: "4px solid #0056b3",
-  color: "#000",
+  padding: "60px 20px 30px",
+  backgroundColor: "#001529",
+  color: "#fff",
 };
 
 const siteTitle = {
   margin: 0,
-  fontWeight: 800,
-  fontSize: "2rem",
+  fontWeight: "800",
+  fontSize: "1.8rem",
+  textTransform: "uppercase",
 };
 
-const siteSubtitle = {
-  margin: 0,
-  fontSize: "1rem",
+const accentLine = {
+  width: "60px",
+  height: "4px",
+  backgroundColor: "#ff9933",
+  margin: "12px auto",
+};
+
+const locationText = {
+  fontSize: "0.8rem",
+  letterSpacing: "1px",
+  opacity: 0.9,
 };
 
 const contentStyle = {
+  flex: 1,
   maxWidth: "900px",
-  margin: "auto",
-  padding: "24px",
-  lineHeight: 1.65,
-  color: "#000",
+  margin: "0 auto",
+  padding: "40px 20px",
+  lineHeight: 1.7,
+  color: "#333",
 };
 
 const pageHeading = {
-  marginBottom: "16px",
-  fontWeight: 800,
-  fontSize: "1.5rem",
+  color: "#21618c",
+  marginBottom: "20px",
+  fontWeight: "800",
+  borderBottom: "2px solid #f0f0f0",
+  paddingBottom: "10px"
 };
 
-const authorityText = {
-  marginTop: "32px",
-  fontWeight: 700,
-};
-
+/* ===================== BALANCED FOOTER STYLES ===================== */
 const footerStyle = {
+  position: "relative",
+  zIndex: 1,
   backgroundColor: "#ffffff",
-  textAlign: "center",
-  padding: "14px 10px",
-  borderTop: "4px solid #0056b3",
-  color: "#000",
+  padding: "15px 0",
+  borderTop: "5px solid #21618c",
 };
 
-const footerLinks = {
-  listStyle: "none",
-  padding: 0,
-  margin: "8px 0 0",
+const footerContainer = {
+  width: "90%",
+  maxWidth: "550px",
+  margin: "0 auto",
+  textAlign: "center",
+};
+
+const footerBrand = {
+  fontSize: "0.85rem",
+  fontWeight: "700",
+  color: "#333",
+  marginBottom: "8px",
+};
+
+const footerLinksWrapper = {
   display: "flex",
-  flexWrap: "wrap",
-  gap: "12px",
   justifyContent: "center",
+  alignItems: "center",
+  gap: "12px",
+  marginBottom: "8px",
+};
+
+const fLink = {
+  color: "#21618c",
+  textDecoration: "none",
+  fontWeight: "600",
+  fontSize: "0.75rem",
+};
+
+const fSep = {
+  color: "#ddd",
+  fontSize: "0.75rem"
+};
+
+const copyright = {
+  fontSize: "0.7rem",
+  color: "#666",
+  margin: 0,
+  borderTop: "1px solid #f0f0f0",
+  paddingTop: "8px"
 };

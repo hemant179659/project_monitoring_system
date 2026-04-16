@@ -9,8 +9,9 @@ API.interceptors.request.use((config) => {
   // ✅ Dono tokens check karo, jo mil jaye wo bhej do
   const adminToken = localStorage.getItem("adminToken");
   const deptToken = localStorage.getItem("deptToken");
+  const destoToken = localStorage.getItem("destoToken");
   
-  const token = deptToken || adminToken; 
+  const token = deptToken || adminToken || destoToken;
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

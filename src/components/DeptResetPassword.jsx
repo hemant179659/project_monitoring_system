@@ -1,8 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import axios from "axios";
+import API from "../api/axios"; // ✅ कस्टम API इंस्टेंस का उपयोग
 import BackButton from "./BackButton";
 import backgroundImage from "../assets/login.jpg";
+
+// Toastify (बेहतर अनुभव के लिए अलर्ट की जगह)
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function DeptResetPassword() {
   const navigate = useNavigate();
@@ -28,105 +32,94 @@ export default function DeptResetPassword() {
   /* ================= VALIDATE LINK ================= */
   useEffect(() => {
     if (!token || !email) {
-      alert(lang === "hi" ? "अमान्य या समाप्त लिंक" : "Invalid or expired link");
-      navigate("/dept-login", { replace: true });
+      toast.error(lang === "hi" ? "अमान्य या समाप्त लिंक" : "Invalid or expired link");
+      setTimeout(() => navigate("/dept-login", { replace: true }), 3000);
     }
   }, [token, email, navigate, lang]);
 
   /* ================= RESET ================= */
   const handleReset = async () => {
     if (!newPassword || !confirmPassword) {
-      return alert(
-        lang === "hi"
-          ? "कृपया सभी फ़ील्ड भरें"
-          : "Please fill all fields"
-      );
+      return toast.warn(lang === "hi" ? "कृपया सभी फ़ील्ड भरें" : "Please fill all fields");
     }
 
     if (newPassword !== confirmPassword) {
-      return alert(
-        lang === "hi"
-          ? "पासवर्ड मेल नहीं खा रहे"
-          : "Passwords do not match"
-      );
+      return toast.error(lang === "hi" ? "पासवर्ड मेल नहीं खा रहे" : "Passwords do not match");
     }
 
     setLoading(true);
     try {
-      const res = await axios.post(
-        `http://localhost:8000/api/department/reset-password`,
-        { email, token, newPassword }
-      );
+      const res = await API.post(`/department/reset-password`, { 
+        email, 
+        token, 
+        newPassword 
+      });
 
-      alert(
-        res.data.message ||
-          (lang === "hi"
-            ? "पासवर्ड सफलतापूर्वक बदला गया"
-            : "Password reset successfully")
-      );
-
-      navigate("/dept-login", { replace: true });
+      toast.success(res.data.message || (lang === "hi" ? "पासवर्ड बदला गया" : "Password reset successfully"));
+      setTimeout(() => navigate("/dept-login", { replace: true }), 2500);
     } catch (err) {
-      alert(
-        err.response?.data?.message ||
-          (lang === "hi" ? "कुछ त्रुटि हुई" : "Something went wrong")
-      );
+      toast.error(err.response?.data?.message || (lang === "hi" ? "कुछ त्रुटि हुई" : "Something went wrong"));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={pageWrapper} lang={lang}>
-      {/* ================= SKIP LINK ================= */}
-      <a href="#main-content" style={skipLink}>
-        {lang === "hi" ? "मुख्य सामग्री पर जाएँ" : "Skip to main content"}
-      </a>
+    <div style={pageWrapper}>
+      <ToastContainer position="top-right" autoClose={2500} />
 
       {/* ================= LANGUAGE TOGGLE ================= */}
       <div style={langToggle}>
-        <button onClick={() => setLang("hi")} style={langBtn(lang === "hi")}>
-          हिंदी
-        </button>
-        <button onClick={() => setLang("en")} style={langBtn(lang === "en")}>
-          EN
+        <button onClick={() => setLang(lang === "hi" ? "en" : "hi")} style={langSwitchBtn}>
+          {lang === "hi" ? "English" : "हिंदी"}
         </button>
       </div>
 
-      {/* ================= MAIN CONTENT ================= */}
-      <div style={contentWrapper}>
-        {!isMobile && (
-          <aside style={leftSection} aria-hidden="true">
-            <div style={leftImage} />
-            <div style={overlay} />
-            <BackButton onClick={() => navigate("/dept-login")} />
-          </aside>
-        )}
+      <div style={{ flex: 1, display: 'flex', flexDirection: isMobile ? 'column' : 'row' }}>
+        
+        {/* LEFT SECTION - Image */}
+        <div
+          style={{ 
+            flex: isMobile ? 'none' : 1,
+            height: isMobile ? '200px' : 'auto',
+            backgroundImage: `url(${backgroundImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-start',
+            paddingTop: '20px'
+          }}
+        >
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.1)' }} />
+          <BackButton onClick={() => navigate("/dept-login")} />
+        </div>
 
-        <main id="main-content" style={rightSection} role="main">
-          <section style={loginBox} aria-labelledby="reset-heading">
-            <h1 id="reset-heading" style={title}>
-              {lang === "hi" ? "पासवर्ड रीसेट करें" : "Reset Password"}
-            </h1>
+        {/* RIGHT SECTION - Form */}
+        <main style={rightSection}>
+          <section style={loginBox}>
+            <h2 style={title}>
+              {lang === "hi" ? "नया पासवर्ड सेट करें" : "Set New Password"}
+            </h2>
+            <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '20px', textAlign: 'center' }}>
+              {lang === "hi" ? "कृपया अपना नया सुरक्षित पासवर्ड चुनें" : "Please choose a new secure password"}
+            </p>
 
-            <label style={label}>
-              {lang === "hi" ? "नया पासवर्ड" : "New Password"}
-            </label>
+            <label style={label}>{lang === "hi" ? "नया पासवर्ड" : "New Password"}</label>
             <input
               style={input}
               type="password"
+              placeholder="••••••••"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
             />
 
-            <label style={label}>
-              {lang === "hi"
-                ? "पासवर्ड पुनः दर्ज करें"
-                : "Confirm Password"}
-            </label>
+            <label style={label}>{lang === "hi" ? "पासवर्ड की पुष्टि करें" : "Confirm Password"}</label>
             <input
               style={input}
               type="password"
+              placeholder="••••••••"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
@@ -136,44 +129,41 @@ export default function DeptResetPassword() {
               onClick={handleReset}
               disabled={loading}
             >
-              {loading
-                ? lang === "hi"
-                  ? "रीसेट हो रहा है..."
-                  : "Resetting..."
-                : lang === "hi"
-                ? "पासवर्ड रीसेट करें"
-                : "Reset Password"}
+              {loading 
+                ? (lang === "hi" ? "बदला जा रहा है..." : "Resetting...") 
+                : (lang === "hi" ? "पासवर्ड अपडेट करें" : "Update Password")}
             </button>
 
-            <button
-              style={secondaryBtn}
-              onClick={() => navigate("/dept-login")}
-            >
-              {lang === "hi" ? "लॉगिन पर वापस जाएँ" : "Back to Login"}
-            </button>
+            <div style={{ textAlign: 'center', marginTop: '15px' }}>
+               <Link to="/dept-login" style={{ color: '#21618c', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 600 }}>
+                  {lang === "hi" ? "← लॉगिन पर वापस जाएँ" : "← Back to Login"}
+               </Link>
+            </div>
           </section>
         </main>
       </div>
 
-      {/* ================= FOOTER (HOME LIKE) ================= */}
-      <footer style={footerStyle} role="contentinfo">
-        <p style={{ margin: 0, fontWeight: 700 }}>
-          {lang === "hi"
-            ? "जिला प्रशासन, उत्तराखंड"
-            : "District Administration, Uttarakhand"}
-        </p>
-        <p style={{ margin: "4px 0", fontSize: "0.8rem" }}>
-          Designed & Developed by District Administration
-        </p>
-
-        <nav aria-label="Footer Navigation">
-          <ul style={footerLinks}>
-            <li><Link to="/privacy-policy">Privacy Policy</Link></li>
-            <li><Link to="/terms">Terms & Conditions</Link></li>
-            <li><Link to="/accessibility">Accessibility</Link></li>
-            <li><Link to="/contact">Contact Us</Link></li>
-          </ul>
-        </nav>
+      {/* ================= BALANCED FOOTER (SYNCED WITH SCREENSHOT 174) ================= */}
+      <footer style={footerStyle}>
+        <div style={footerContainer}>
+          <div style={footerBrand}>
+            <strong>{lang === "hi" ? "जिला प्रशासन, उत्तराखंड" : "DISTRICT ADMINISTRATION, UTTARAKHAND"}</strong>
+          </div>
+          
+          <nav style={footerLinksWrapper}>
+            <Link to="/privacy" style={fLink}>Privacy Policy</Link>
+            <span style={fSep}>|</span>
+            <Link to="/terms" style={fLink}>Terms & Conditions</Link>
+            <span style={fSep}>|</span>
+            <Link to="/accessibility" style={fLink}>Accessibility</Link>
+            <span style={fSep}>|</span>
+            <Link to="/contact" style={fLink}>Contact Us</Link>
+          </nav>
+          
+          <p style={copyright}>
+            © {new Date().getFullYear()} Designed & Developed by District Administration
+          </p>
+        </div>
       </footer>
     </div>
   );
@@ -185,151 +175,130 @@ const pageWrapper = {
   minHeight: "100vh",
   display: "flex",
   flexDirection: "column",
-  backgroundColor: "#f4f6f9",
+  backgroundColor: "#fff",
 };
 
-const contentWrapper = {
-  flex: 1,
-  display: "flex",
-};
-
-/* Skip link */
-const skipLink = {
-  position: "absolute",
-  top: "-40px",
-  left: "10px",
-  background: "#000",
-  color: "#fff",
-  padding: "6px 10px",
-  zIndex: 1000,
-  textDecoration: "none",
-};
-
-/* Language toggle */
 const langToggle = {
   position: "absolute",
-  top: "10px",
-  right: "10px",
-  display: "flex",
-  gap: "6px",
+  top: "15px",
+  right: "20px",
+  zIndex: 100,
 };
 
-const langBtn = (active) => ({
-  padding: "5px 9px",
-  border: "1px solid #0056b3",
-  backgroundColor: active ? "#0056b3" : "#ffffff",
-  color: active ? "#ffffff" : "#0056b3",
-  fontSize: "0.8rem",
-  fontWeight: 600,
+const langSwitchBtn = {
+  padding: "6px 12px",
+  borderRadius: "20px",
+  border: "1px solid #21618c",
+  backgroundColor: "#fff",
+  color: "#21618c",
+  fontWeight: "700",
+  fontSize: "0.75rem",
   cursor: "pointer",
-});
-
-/* Left image */
-const leftSection = {
-  flex: 1,
-  position: "relative",
+  boxShadow: "0 2px 5px rgba(0,0,0,0.1)"
 };
 
-const leftImage = {
-  position: "absolute",
-  inset: 0,
-  backgroundImage: `url(${backgroundImage})`,
-  backgroundSize: "cover",
-  backgroundPosition: "center",
-};
-
-const overlay = {
-  position: "absolute",
-  inset: 0,
-  backgroundColor: "rgba(0,0,0,0.25)",
-};
-
-/* Right section */
 const rightSection = {
   flex: 1,
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
-  backgroundColor: "#ffffff",
+  padding: "40px 20px",
 };
 
-/* Reset box */
 const loginBox = {
   width: "100%",
-  maxWidth: 400,
-  background: "#ffffff",
-  padding: 26,
-  borderRadius: 8,
-  boxShadow: "0 4px 14px rgba(0,0,0,0.15)",
+  maxWidth: 380,
+  padding: "30px",
+  borderRadius: "12px",
+  boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
+  backgroundColor: "#fff",
+  border: "1px solid #f0f0f0"
 };
 
 const title = {
   textAlign: "center",
-  marginBottom: 16,
-  fontSize: "1.1rem",
-  fontWeight: 700,
-  color: "#000",
+  marginBottom: 8,
+  fontSize: "1.3rem",
+  fontWeight: "800",
+  color: "#002147",
 };
 
 const label = {
   display: "block",
-  marginBottom: 4,
-  fontSize: "0.85rem",
-  fontWeight: 500,
-  color: "#000",
+  marginBottom: "6px",
+  fontSize: "0.8rem",
+  fontWeight: "700",
+  color: "#333",
+  textTransform: "uppercase",
 };
 
 const input = {
   width: "100%",
-  padding: 11,
-  marginBottom: 14,
-  borderRadius: 6,
-  border: "1px solid #000",
-  fontSize: "0.95rem",
-  fontWeight: 500,
-  color: "#000",
+  padding: "12px",
+  marginBottom: "18px",
+  borderRadius: "8px",
+  border: "1.5px solid #ddd",
+  fontSize: "0.9rem",
+  boxSizing: "border-box",
 };
 
 const primaryBtn = {
   width: "100%",
-  padding: 11,
-  backgroundColor: "#0056b3",
+  padding: "13px",
+  backgroundColor: "#21618c",
   color: "#fff",
   border: "none",
-  borderRadius: 6,
+  borderRadius: "8px",
   fontSize: "0.95rem",
-  fontWeight: 600,
+  fontWeight: "700",
   cursor: "pointer",
+  transition: "background 0.3s"
 };
 
-const secondaryBtn = {
-  width: "100%",
-  padding: 9,
-  marginTop: 10,
-  backgroundColor: "#e9ecef",
-  color: "#000",
-  border: "1px solid #000",
-  borderRadius: 6,
-  fontSize: "0.85rem",
-  fontWeight: 500,
-  cursor: "pointer",
-};
-
-/* Footer – same as Home */
+/* --- FOOTER STYLES (SYNCED) --- */
 const footerStyle = {
   backgroundColor: "#ffffff",
-  textAlign: "center",
-  padding: "14px 10px",
-  borderTop: "4px solid #0056b3",
-  color: "#000",
+  padding: "15px 0",
+  borderTop: "5px solid #21618c",
+  width: '100%'
 };
 
-const footerLinks = {
-  listStyle: "none",
-  padding: 0,
-  margin: "8px 0 0",
+const footerContainer = {
+  width: "90%",
+  maxWidth: "550px",
+  margin: "0 auto",
+  textAlign: "center",
+};
+
+const footerBrand = {
+  fontSize: "0.85rem",
+  fontWeight: "700",
+  color: "#333",
+  marginBottom: "8px",
+};
+
+const footerLinksWrapper = {
   display: "flex",
-  flexWrap: "wrap",
-  gap: "12px",
   justifyContent: "center",
+  alignItems: "center",
+  gap: "12px",
+  marginBottom: "8px",
+  flexWrap: "wrap",
+};
+
+const fLink = {
+  color: "#21618c",
+  textDecoration: "none",
+  fontWeight: "600",
+  fontSize: "0.75rem",
+};
+
+const fSep = { color: "#ddd", fontSize: "0.75rem" };
+
+const copyright = {
+  fontSize: "0.7rem",
+  color: "#666",
+  margin: 0,
+  borderTop: "1px solid #f0f0f0",
+  paddingTop: "8px",
 };

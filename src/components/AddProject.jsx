@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-// ✅ Custom API instance use karein taaki Token automatically chala jaye
+import { useNavigate, Link } from "react-router-dom"; // Link add kiya gaya
 import API from "../api/axios"; 
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -18,18 +17,26 @@ export default function AddProject() {
   const [contactNumber, setContactNumber] = useState("");
   const [budget, setBudget] = useState("");
   const [remarks, setRemarks] = useState("");
+  const [lang, setLang] = useState("en"); // Footer consistency ke liye
 
   const [totalAllocated, setTotalAllocated] = useState(0);
   const [remainingBudget, setRemainingBudget] = useState(0);
 
-  const loggedDept = localStorage.getItem("loggedInDepartment");
+const loggedDept = localStorage.getItem("loggedInDepartment");
+  const token = localStorage.getItem("deptToken");
+  
+  useEffect(() => {
+    if (!loggedDept || !token) {
+      toast.error("Access Denied. Please login as Admin.");
+      navigate("/dept-login", { replace: true });
+    }
+  }, [navigate]);
 
-  // 1. Fetch Budget Info (Using Custom API Instance)
+  // Fetch Budget Info
   useEffect(() => {
     const fetchBudgetInfo = async () => {
       if (!loggedDept) return;
       try {
-        // ✅ axios.get ki jagah API.get use karein
         const res = await API.get(`/department/budget-summary`);
         const deptData = res.data.find(d => d.department === loggedDept);
         if (deptData) {
@@ -71,7 +78,6 @@ export default function AddProject() {
     }
 
     try {
-      // ✅ API.post use karein
       await API.post("/department/add-project", {
         name,
         progress: progressValue,
@@ -92,7 +98,7 @@ export default function AddProject() {
     }
   };
 
-  // --- Styles (Wahi jo aapke paas hain) ---
+  // --- Styles ---
   const mainContainerStyle = { display: "flex", flexDirection: "column", minHeight: "100vh", background: "#f4f6f9" };
   const formWrapperStyle = { flex: 1, display: "flex", justifyContent: "center", alignItems: "center", padding: "40px 20px" };
   const formStyle = { background: "#fff", padding: "30px", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", width: "100%", maxWidth: "600px" };
@@ -135,10 +141,80 @@ export default function AddProject() {
         </div>
       </div>
 
-      <footer style={{ width: '100%', backgroundColor: '#f8f9fa', borderTop: '3px solid #0056b3', padding: '12px 10px', color: '#333', textAlign: 'center', marginTop: 'auto' }}>
-          <p style={{ margin: '0', fontSize: '0.85rem', fontWeight: 'bold' }}>District Administration Udham Singh Nagar</p>
-          <p style={{ margin: '4px 0', fontSize: '0.7rem' }}>Official DPMS Portal &copy; {new Date().getFullYear()} | Designed by NIC</p>
+      {/* ================= BALANCED FOOTER ================= */}
+      <footer style={footerStyle}>
+        <div style={footerContainer}>
+          <div style={footerBrand}>
+            <strong>{lang === "hi" ? "जिला प्रशासन, उत्तराखंड" : "DISTRICT ADMINISTRATION, UTTARAKHAND"}</strong>
+          </div>
+          
+          <nav style={footerLinksWrapper}>
+            <Link to="/privacy" style={fLink}>Privacy Policy</Link>
+            <span style={fSep}>|</span>
+            <Link to="/terms" style={fLink}>Terms & Conditions</Link>
+            <span style={fSep}>|</span>
+            <Link to="/accessibility" style={fLink}>Accessibility</Link>
+            <span style={fSep}>|</span>
+            <Link to="/contact" style={fLink}>Contact Us</Link>
+          </nav>
+          
+          <p style={copyright}>
+            © {new Date().getFullYear()} Designed & Developed by District Administration
+          </p>
+        </div>
       </footer>
     </div>
   );
 }
+
+/* ===================== FOOTER STYLES ===================== */
+const footerStyle = {
+  position: "relative",
+  zIndex: 1,
+  backgroundColor: "#ffffff",
+  padding: "15px 0",
+  borderTop: "5px solid #21618c",
+  marginTop: "auto" // Isse footer hamesha bottom par rahega
+};
+
+const footerContainer = {
+  width: "90%",
+  maxWidth: "550px",
+  margin: "0 auto",
+  textAlign: "center",
+};
+
+const footerBrand = {
+  fontSize: "0.85rem",
+  fontWeight: "700",
+  color: "#333",
+  marginBottom: "8px",
+};
+
+const footerLinksWrapper = {
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  gap: "12px",
+  marginBottom: "8px",
+};
+
+const fLink = {
+  color: "#21618c",
+  textDecoration: "none",
+  fontWeight: "600",
+  fontSize: "0.75rem",
+};
+
+const fSep = {
+  color: "#ddd",
+  fontSize: "0.75rem"
+};
+
+const copyright = {
+  fontSize: "0.7rem",
+  color: "#666",
+  margin: 0,
+  borderTop: "1px solid #f0f0f0",
+  paddingTop: "8px"
+};

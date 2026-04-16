@@ -7,9 +7,25 @@ export default function Home() {
   const [lang, setLang] = useState("en");
 
   useEffect(() => {
+    // 1. रिसाइज़ हैंडलर
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+
+    // 2. बैक बटन डिसेबल करने का लॉजिक (STRICT MODE)
+    const disableBack = () => {
+      window.history.pushState(null, null, window.location.href);
+      window.onpopstate = function () {
+        window.history.go(1);
+      };
+    };
+
+    disableBack();
+
+    // क्लीनअप फंक्शन
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.onpopstate = null;
+    };
   }, []);
 
   return (
@@ -59,9 +75,9 @@ export default function Home() {
             <span style={fSep}>|</span>
             <Link to="/terms" style={fLink}>Terms & Conditions</Link>
             <span style={fSep}>|</span>
-            <Link to="/budgetallocation" style={fLink}>Budget Allocation</Link>
+            <Link to="/accessibility" style={fLink}>Accessibility</Link>
             <span style={fSep}>|</span>
-            <Link to="/update-budget" style={fLink}>Update Budget</Link>
+            <Link to="/contact" style={fLink}>Contact Us</Link>
           </nav>
           
           <p style={copyright}>
@@ -75,6 +91,7 @@ export default function Home() {
           .btn-3d { transition: all 0.1s ease-in-out; cursor: pointer; text-decoration: none; }
           .btn-3d:active { transform: translateY(4px); border-bottom-width: 2px !important; box-shadow: 0 2px 5px rgba(0,0,0,0.3) !important; }
           .btn-3d:hover { filter: brightness(1.1); }
+          /* बैक बटन डिसेबल करने के लिए हिस्ट्री स्टैक को मैनेज करना जरूरी है */
         `}
       </style>
     </div>
@@ -184,18 +201,17 @@ const govButton = (bgColor, isMobile) => ({
   alignItems: "center",
 });
 
-// ================= BALANCED FOOTER =================
 const footerStyle = {
   position: "relative",
   zIndex: 1,
   backgroundColor: "#ffffff",
-  padding: "15px 0", // मध्यम पैडिंग (Balanced)
+  padding: "15px 0",
   borderTop: "5px solid #21618c",
 };
 
 const footerContainer = {
   width: "90%",
-  maxWidth: "550px", // कंटेंट विड्थ सेट है
+  maxWidth: "550px",
   margin: "0 auto",
   textAlign: "center",
 };

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import API from "../api/axios"; // ✅ Tera custom instance
+import { useNavigate, Link } from "react-router-dom"; // Link जोड़ा गया
+import API from "../api/axios"; 
 import styles from "../styles/dashboard.module.css";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -12,9 +12,18 @@ export default function DailyReporting() {
   const [progressUpdate, setProgressUpdate] = useState("");
   const [remarks, setRemarks] = useState("");
   const [images, setImages] = useState([]);
+  const [lang, setLang] = useState("hi"); // कंसिस्टेंसी के लिए
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  const loggedDept = localStorage.getItem("loggedInDepartment");
+const loggedDept = localStorage.getItem("loggedInDepartment");
+  const token = localStorage.getItem("deptToken");
+  
+  useEffect(() => {
+    if (!loggedDept || !token) {
+      toast.error("Access Denied. Please login as Admin.");
+      navigate("/dept-login", { replace: true });
+    }
+  }, [navigate]);
 
   // Layout handle
   useEffect(() => {
@@ -31,7 +40,7 @@ export default function DailyReporting() {
     }
   }, [loggedDept, navigate]);
 
-  // ✅ PROJECTS LOAD FIX: API instance use kiya
+  // PROJECTS LOAD
   useEffect(() => {
     const loadProjects = async () => {
       try {
@@ -63,7 +72,6 @@ export default function DailyReporting() {
   const removeImage = (index) =>
     setImages((prev) => prev.filter((_, i) => i !== index));
 
-  // ✅ UPDATE PROGRESS FIX
   const handleUpdate = async () => {
     if (!selectedProject || progressUpdate === "") {
       toast.warning("Please select a project and enter progress");
@@ -73,11 +81,9 @@ export default function DailyReporting() {
     const formData = new FormData();
     formData.append("progress", progressUpdate);
     formData.append("remarks", remarks || "");
-    // Photos append
     images.forEach((img) => formData.append("photos", img));
 
     try {
-      // ✅ API instance + Multipart Header
       const res = await API.put(
         `/department/project/update/${selectedProject}`,
         formData,
@@ -88,7 +94,6 @@ export default function DailyReporting() {
 
       toast.success(res.data.message || "Progress updated successfully!");
 
-      // Clear state
       setProgressUpdate("");
       setRemarks("");
       setImages([]);
@@ -107,14 +112,14 @@ export default function DailyReporting() {
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: "#f4f6f9" }}>
       <ToastContainer position="top-right" autoClose={2500} />
 
-      <main style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '40px 20px' }}>
+      <main style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: isMobile ? '20px 10px' : '40px 20px' }}>
         <div style={{ width: "100%", maxWidth: "650px" }}>
-          <h1 style={{ textAlign: "center", marginBottom: "25px", color: "#222", fontWeight: "700" }}>
+          <h1 style={{ textAlign: "center", marginBottom: "25px", color: "#002147", fontWeight: "800", fontSize: isMobile ? '1.5rem' : '2.2rem' }}>
             Daily Reporting – {loggedDept}
           </h1>
 
-          <div className={styles.reportingCard} style={{ background: "#ffffff", padding: "28px", borderRadius: "12px", boxShadow: "0 6px 18px rgba(0,0,0,0.12)" }}>
-            <h2 style={{ marginBottom: "20px", color: "#333", fontWeight: 600 }}>Update Project Progress</h2>
+          <div className={styles.reportingCard} style={{ background: "#ffffff", padding: isMobile ? "20px" : "35px", borderRadius: "12px", boxShadow: "0 10px 30px rgba(0,0,0,0.1)", border: "1px solid #e0e0e0" }}>
+            <h2 style={{ marginBottom: "20px", color: "#333", fontWeight: 700, fontSize: "1.2rem", borderBottom: "2px solid #f1f1f1", paddingBottom: "10px" }}>Update Project Progress</h2>
 
             <label style={labelStyle}>Select Project</label>
             <select value={selectedProject} onChange={(e) => setSelectedProject(e.target.value)} style={inputStyle}>
@@ -125,13 +130,13 @@ export default function DailyReporting() {
             </select>
 
             <label style={labelStyle}>Progress (%)</label>
-            <input type="number" min="0" max="100" value={progressUpdate} onChange={(e) => setProgressUpdate(e.target.value)} placeholder="Enter progress" style={inputStyle} />
+            <input type="number" min="0" max="100" value={progressUpdate} onChange={(e) => setProgressUpdate(e.target.value)} placeholder="Enter progress (e.g. 45)" style={inputStyle} />
 
             <label style={labelStyle}>Remarks</label>
-            <textarea rows={4} value={remarks} onChange={(e) => setRemarks(e.target.value)} placeholder="Add remarks" style={{ ...inputStyle, resize: "vertical" }} />
+            <textarea rows={4} value={remarks} onChange={(e) => setRemarks(e.target.value)} placeholder="Add work details or status remarks" style={{ ...inputStyle, resize: "vertical" }} />
 
             <label style={labelStyle}>Upload up to 5 JPG Photos (≤2MB each)</label>
-            <input type="file" accept="image/jpeg" multiple onChange={handleImageChange} style={{ marginTop: "8px" }} />
+            <input type="file" accept="image/jpeg" multiple onChange={handleImageChange} style={{ marginTop: "8px", fontSize: "14px" }} />
 
             <div style={imageGridStyle}>
               {images.map((img, i) => (
@@ -147,15 +152,26 @@ export default function DailyReporting() {
         </div>
       </main>
 
+      {/* ================= BALANCED FOOTER (SYNCED) ================= */}
       <footer style={footerStyle}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <p style={{ margin: '0', fontSize: '0.85rem', fontWeight: 'bold', color: '#002147' }}>District Administration</p>
-          <p style={{ margin: '4px 0', fontSize: '0.7rem', opacity: 0.8 }}>Designed and Developed by <strong>District Administration</strong></p>
-          <div style={footerBottomStyle}>
-            <span>&copy; {new Date().getFullYear()} All Rights Reserved.</span>
-            <span>|</span>
-            <span>Official Digital Portal</span>
+        <div style={footerContainer}>
+          <div style={footerBrand}>
+            <strong>{lang === "hi" ? "जिला प्रशासन, उत्तराखंड" : "DISTRICT ADMINISTRATION, UTTARAKHAND"}</strong>
           </div>
+          
+          <nav style={footerLinksWrapper}>
+            <Link to="/privacy" style={fLink}>Privacy Policy</Link>
+            <span style={fSep}>|</span>
+            <Link to="/terms" style={fLink}>Terms & Conditions</Link>
+            <span style={fSep}>|</span>
+            <Link to="/accessibility" style={fLink}>Accessibility</Link>
+            <span style={fSep}>|</span>
+            <Link to="/contact" style={fLink}>Contact Us</Link>
+          </nav>
+          
+          <p style={copyright}>
+            © {new Date().getFullYear()} Designed & Developed by District Administration
+          </p>
         </div>
       </footer>
     </div>
@@ -163,12 +179,57 @@ export default function DailyReporting() {
 }
 
 /* --- Inline Styles --- */
-const labelStyle = { fontWeight: 600, color: "#222", display: "block", marginBottom: "5px" };
-const inputStyle = { width: "100%", padding: "10px", marginTop: "6px", marginBottom: "15px", borderRadius: "6px", border: "1px solid #bbb", color: "#000" };
-const submitBtnStyle = { marginTop: "25px", width: "100%", background: "#4CAF50", color: "#fff", padding: "12px", fontSize: "16px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: 600 };
+const labelStyle = { fontWeight: 700, color: "#333", display: "block", marginBottom: "5px", fontSize: "14px" };
+const inputStyle = { width: "100%", padding: "12px", marginTop: "6px", marginBottom: "15px", borderRadius: "6px", border: "1px solid #cbd5e0", fontSize: "15px", outline: "none", boxSizing: "border-box" };
+const submitBtnStyle = { marginTop: "25px", width: "100%", background: "#0056b3", color: "#fff", padding: "15px", fontSize: "16px", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold", transition: "0.3s" };
 const imageGridStyle = { display: "flex", gap: "12px", flexWrap: "wrap", marginTop: "15px" };
-const imageBoxStyle = { position: "relative", width: "90px", height: "90px", borderRadius: "8px", overflow: "hidden", boxShadow: "0 2px 6px rgba(0,0,0,0.2)" };
+const imageBoxStyle = { position: "relative", width: "80px", height: "80px", borderRadius: "8px", overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.15)", border: "2px solid #fff" };
 const imageStyle = { width: "100%", height: "100%", objectFit: "cover" };
-const removeBtnStyle = { position: "absolute", top: "4px", right: "4px", background: "rgba(255,77,79,1)", color: "#fff", border: "none", borderRadius: "50%", width: "22px", height: "22px", cursor: "pointer", fontWeight: "bold" };
-const footerStyle = { width: '100%', backgroundColor: '#f8f9fa', borderTop: '3px solid #0056b3', padding: '12px 10px', color: '#333', textAlign: 'center', fontFamily: "serif", marginTop: 'auto' };
-const footerBottomStyle = { display: 'flex', justifyContent: 'center', gap: '12px', fontSize: '0.65rem', borderTop: '1px solid #ddd', marginTop: '8px', paddingTop: '8px' };
+const removeBtnStyle = { position: "absolute", top: "2px", right: "2px", background: "#e74c3c", color: "#fff", border: "none", borderRadius: "50%", width: "20px", height: "20px", cursor: "pointer", fontWeight: "bold", fontSize: "12px" };
+
+/* ===================== FOOTER STYLES (SYNCED) ===================== */
+const footerStyle = {
+  backgroundColor: "#ffffff",
+  padding: "15px 0",
+  borderTop: "5px solid #21618c",
+  marginTop: "auto"
+};
+
+const footerContainer = {
+  width: "90%",
+  maxWidth: "550px",
+  margin: "0 auto",
+  textAlign: "center",
+};
+
+const footerBrand = {
+  fontSize: "0.85rem",
+  fontWeight: "700",
+  color: "#333",
+  marginBottom: "8px",
+};
+
+const footerLinksWrapper = {
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  gap: "12px",
+  marginBottom: "8px",
+};
+
+const fLink = {
+  color: "#21618c",
+  textDecoration: "none",
+  fontWeight: "600",
+  fontSize: "0.75rem",
+};
+
+const fSep = { color: "#ddd", fontSize: "0.75rem" };
+
+const copyright = {
+  fontSize: "0.7rem",
+  color: "#666",
+  margin: 0,
+  borderTop: "1px solid #f0f0f0",
+  paddingTop: "8px"
+};
